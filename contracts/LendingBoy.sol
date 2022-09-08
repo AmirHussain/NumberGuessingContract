@@ -38,10 +38,7 @@ abstract contract Ownable is Context {
     }
 
     function transferOwnership(address newOwner) public virtual onlyOwner {
-        require(
-            newOwner != address(0),
-            "Ownable: new owner is the zero address"
-        );
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
         _transferOwnership(newOwner);
     }
 
@@ -55,7 +52,6 @@ abstract contract Ownable is Context {
 abstract contract ReentrancyGuard {
     uint256 private constant _NOT_ENTERED = 1;
     uint256 private constant _ENTERED = 2;
-
     uint256 private _status;
 
     constructor() {
@@ -65,12 +61,9 @@ abstract contract ReentrancyGuard {
     modifier nonReentrant() {
         // On the first call to nonReentrant, _notEntered will be true
         require(_status != _ENTERED, "ReentrancyGuard: reentrant call");
-
         // Any calls to nonReentrant after this point will fail
         _status = _ENTERED;
-
         _;
-
         // By storing the original value once again, a refund is triggered (see
         // https://eips.ethereum.org/EIPS/eip-2200)
         _status = _NOT_ENTERED;
@@ -79,44 +72,24 @@ abstract contract ReentrancyGuard {
 
 interface IERC20 {
     function totalSupply() external view returns (uint256);
-
     function balanceOf(address account) external view returns (uint256);
-
     function transfer(address to, uint256 amount) external returns (bool);
-
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
-
+    function allowance(address owner, address spender) external view returns (uint256);
     function approve(address spender, uint256 amount) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
+    function transferFrom( address from, address to, uint256 amount) external returns (bool);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval( address indexed owner, address indexed spender, uint256 value);
 }
 
 interface IERC20Metadata is IERC20 {
     function name() external view returns (string memory);
-
     function symbol() external view returns (string memory);
-
     function decimals() external view returns (uint8);
 }
 
 contract ERC20 is Context, IERC20, IERC20Metadata, ReentrancyGuard {
     mapping(address => uint256) private _balances;
-
     mapping(address => mapping(address => uint256)) private _allowances;
 
     uint256 private _totalSupply;
@@ -139,80 +112,43 @@ contract ERC20 is Context, IERC20, IERC20Metadata, ReentrancyGuard {
         return _totalSupply;
     }
 
-    function balanceOf(address account)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function balanceOf(address account) public view virtual override returns (uint256){
         return _balances[account];
     }
 
-    function transfer(address to, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _transfer(owner, to, amount);
         return true;
     }
 
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override
-        returns (uint256)
-    {
+    function allowance(address owner, address spender) public view virtual override returns (uint256) {
         return _allowances[owner][spender];
     }
 
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override
-        returns (bool)
-    {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, amount);
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public virtual override returns (bool) {
+    function transferFrom( address from, address to, uint256 amount) public virtual override returns (bool) {
         address spender = _msgSender();
         _spendAllowance(from, spender, amount);
         _transfer(from, to, amount);
         return true;
     }
 
-    function increaseAllowance(address spender, uint256 addedValue)
-        public
-        virtual
-        returns (bool)
-    {
+    function increaseAllowance(address spender, uint256 addedValue) public virtual returns (bool) {
         address owner = _msgSender();
         _approve(owner, spender, allowance(owner, spender) + addedValue);
         return true;
     }
 
-    function decreaseAllowance(address spender, uint256 subtractedValue)
-        public
-        virtual
-        returns (bool)
-    {
+    function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
         address owner = _msgSender();
         uint256 currentAllowance = allowance(owner, spender);
-        require(
-            currentAllowance >= subtractedValue,
-            "ERC20: decreased allowance below zero"
-        );
+        require( currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
         unchecked {
             _approve(owner, spender, currentAllowance - subtractedValue);
         }
@@ -220,21 +156,14 @@ contract ERC20 is Context, IERC20, IERC20Metadata, ReentrancyGuard {
         return true;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {
+    function _transfer( address from, address to, uint256 amount) internal virtual {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, amount);
 
         uint256 fromBalance = _balances[from];
-        require(
-            fromBalance >= amount,
-            "ERC20: transfer amount exceeds balance"
-        );
+        require( fromBalance >= amount, "ERC20: transfer amount exceeds balance");
         unchecked {
             _balances[from] = fromBalance - amount;
         }
@@ -274,11 +203,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata, ReentrancyGuard {
         _afterTokenTransfer(account, address(0), amount);
     }
 
-    function _approve(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal virtual {
+    function _approve( address owner, address spender, uint256 amount ) internal virtual {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -286,42 +211,22 @@ contract ERC20 is Context, IERC20, IERC20Metadata, ReentrancyGuard {
         emit Approval(owner, spender, amount);
     }
 
-    function _spendAllowance(
-        address owner,
-        address spender,
-        uint256 amount
-    ) internal virtual {
+    function _spendAllowance( address owner, address spender, uint256 amount) internal virtual {
         uint256 currentAllowance = allowance(owner, spender);
         if (currentAllowance != type(uint256).max) {
-            require(
-                currentAllowance >= amount,
-                "ERC20: insufficient allowance"
-            );
+            require(currentAllowance >= amount,"ERC20: insufficient allowance");
             unchecked {
                 _approve(owner, spender, currentAllowance - amount);
             }
         }
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {}
-
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {}
+    function _beforeTokenTransfer(address from,address to,uint256 amount) internal virtual {}
+    function _afterTokenTransfer(address from,address to,uint256 amount) internal virtual {}
 }
 
 library SafeMath {
-    function tryAdd(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryAdd(uint256 a, uint256 b) internal pure returns (bool, uint256){
         unchecked {
             uint256 c = a + b;
             if (c < a) return (false, 0);
@@ -329,22 +234,14 @@ library SafeMath {
         }
     }
 
-    function trySub(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function trySub(uint256 a, uint256 b) internal pure returns (bool, uint256) {
         unchecked {
             if (b > a) return (false, 0);
             return (true, a - b);
         }
     }
 
-    function tryMul(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryMul(uint256 a, uint256 b) internal pure returns (bool, uint256) {
         unchecked {
             // Gas optimization: this is cheaper than requiring 'a' not being zero, but the
             // benefit is lost if 'b' is also tested.
@@ -356,22 +253,14 @@ library SafeMath {
         }
     }
 
-    function tryDiv(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryDiv(uint256 a, uint256 b) internal pure returns (bool, uint256) {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a / b);
         }
     }
 
-    function tryMod(uint256 a, uint256 b)
-        internal
-        pure
-        returns (bool, uint256)
-    {
+    function tryMod(uint256 a, uint256 b) internal pure returns (bool, uint256) {
         unchecked {
             if (b == 0) return (false, 0);
             return (true, a % b);
@@ -398,33 +287,21 @@ library SafeMath {
         return a % b;
     }
 
-    function sub(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function sub( uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         unchecked {
             require(b <= a, errorMessage);
             return a - b;
         }
     }
 
-    function div(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function div( uint256 a, uint256 b, string memory errorMessage ) internal pure returns (uint256) {
         unchecked {
             require(b > 0, errorMessage);
             return a / b;
         }
     }
 
-    function mod(
-        uint256 a,
-        uint256 b,
-        string memory errorMessage
-    ) internal pure returns (uint256) {
+    function mod( uint256 a, uint256 b, string memory errorMessage) internal pure returns (uint256) {
         unchecked {
             require(b > 0, errorMessage);
             return a % b;
@@ -433,61 +310,16 @@ library SafeMath {
 }
 
 contract Demountain is ERC20, Ownable {
-    event UserStake(
-        address indexed addr,
-        uint256 timestamp,
-        uint256 rawAmount,
-        uint256 duration
-    );
-
-    event UserStakeCollect(
-        address indexed addr,
-        uint256 timestamp,
-        uint256 rawAmount
-    );
-
+    event UserStake( address indexed addr, uint256 timestamp, uint256 rawAmount, uint256 duration);
+    event UserStakeCollect( address indexed addr, uint256 timestamp, uint256 rawAmount);
     event UserLobby(address indexed addr, uint256 timestamp, uint256 rawAmount);
-
-    event UserLobbyCollect(
-        address indexed addr,
-        uint256 timestamp,
-        uint256 rawAmount
-    );
-
-    event stake_sell_request(
-        address indexed addr,
-        uint256 timestamp,
-        uint256 price,
-        uint256 rawAmount,
-        uint256 stakeId
-    );
-
-    event stake_loan_request(
-        address indexed addr,
-        uint256 timestamp,
-        uint256 rawAmount,
-        uint256 duration,
-        uint256 stakeId
-    );
-
+    event UserLobbyCollect( address indexed addr, uint256 timestamp, uint256 rawAmount);
+    event stake_sell_request( address indexed addr, uint256 timestamp, uint256 price, uint256 rawAmount, uint256 stakeId);
+    event stake_loan_request( address indexed addr, uint256 timestamp, uint256 rawAmount, uint256 duration, uint256 stakeId);
     event stake_lend(address indexed addr, uint256 timestamp, uint256 stakeId);
-
     event day_lobby_entry(uint256 timestamp, uint256 day, uint256 value);
-
-    event lottery_winner(
-        address indexed addr,
-        uint256 amount,
-        uint256 timestamp,
-        uint256 lastRecord
-    );
-
-    event stake_sold(
-        address indexed addr,
-        address indexed addr_2,
-        uint256 timestamp,
-        uint256 amount,
-        uint256 stakeId
-    );
+    event lottery_winner( address indexed addr, uint256 amount, uint256 timestamp, uint256 lastRecord);
+    event stake_sold( address indexed addr, address indexed addr_2, uint256 timestamp, uint256 amount, uint256 stakeId);
 
     constructor() {
         _mint(msg.sender, 3000000 * 1e18); // 3M goes for day 1 users of the old contract and their refs reward
@@ -906,10 +738,7 @@ contract Demountain is ERC20, Ownable {
 
     function EnterStake(uint256 amount, uint256 stakingDays) external {
         require(stakingDays >= 1, "Can't be 0");
-        require(
-            stakingDays <= max_stake_days,
-            "Days greater than max duration"
-        );
+        require(stakingDays <= max_stake_days, "Days greater than max duration");
         require(balanceOf(msg.sender) >= amount, "Not enough balance");
 
         _updateDaily();
@@ -955,11 +784,7 @@ contract Demountain is ERC20, Ownable {
     function calcStakeCount(address _address) public view returns (uint256) {
         uint256 stakeCount = 0;
 
-        for (
-            uint256 i = 0;
-            mapMemberStake[_address][i].userAddress == _address;
-            i++
-        ) {
+        for (uint256 i = 0; mapMemberStake[_address][i].userAddress == _address; i++ ) {
             stakeCount += 1;
         }
 
@@ -980,22 +805,10 @@ contract Demountain is ERC20, Ownable {
      * @param doNotSendDivs do or not do sent the stake's divs to the user (used when re entring the lobby using the stake's divs)
      */
     function DoEndStake(uint256 stakeId, bool doNotSendDivs) internal {
-        require(
-            mapMemberStake[msg.sender][stakeId].endDay <= currentDay,
-            "Wait for end time"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].userAddress == msg.sender,
-            "Unauthorized"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stakeCollected == false,
-            "Already collected"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_hasSold == false,
-            "Already sold"
-        );
+        require( mapMemberStake[msg.sender][stakeId].endDay <= currentDay, "Wait for end time");
+        require( mapMemberStake[msg.sender][stakeId].userAddress == msg.sender, "Unauthorized");
+        require( mapMemberStake[msg.sender][stakeId].stakeCollected == false, "Already collected");
+        require( mapMemberStake[msg.sender][stakeId].stake_hasSold == false, "Already sold");
 
         _updateDaily();
 
@@ -1122,32 +935,17 @@ contract Demountain is ERC20, Ownable {
         _updateDaily();
 
         require(stakeSellingIsPaused == false, "Paused");
-        require(
-            mapMemberStake[msg.sender][stakeId].userAddress == msg.sender,
-            "Unauthorized"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_hasLoan == false,
-            "Stake has loan"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_hasSold == false,
-            "Stake has been sold"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].endDay > currentDay,
-            "Stake ended"
-        );
+        require(mapMemberStake[msg.sender][stakeId].userAddress == msg.sender,"Unauthorized");
+        require(mapMemberStake[msg.sender][stakeId].stake_hasLoan == false,"Stake has loan");
+        require(mapMemberStake[msg.sender][stakeId].stake_hasSold == false,"Stake has been sold");
+        require(mapMemberStake[msg.sender][stakeId].endDay > currentDay,"Stake ended");
 
         /* if stake is for loan, remove it from loan requests */
         if (mapMemberStake[msg.sender][stakeId].stake_forLoan == true) {
             cancelStakeLoanRequest(stakeId);
         }
 
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_forLoan == false,
-            "Stake has active loan"
-        );
+        require(mapMemberStake[msg.sender][stakeId].stake_forLoan == false,"Stake has active loan");
 
         mapMemberStake[msg.sender][stakeId].stake_forSell = true;
         mapMemberStake[msg.sender][stakeId].price = price;
@@ -1156,13 +954,7 @@ contract Demountain is ERC20, Ownable {
         sellStakeRequests[sellStakeRequestCount].stakeId = stakeId;
         sellStakeRequestCount++;
 
-        emit stake_sell_request(
-            msg.sender,
-            block.timestamp,
-            price,
-            mapMemberStake[msg.sender][stakeId].tokenValue,
-            stakeId
-        );
+        emit stake_sell_request( msg.sender, block.timestamp, price, mapMemberStake[msg.sender][stakeId].tokenValue, stakeId);
     }
 
     /**
@@ -1177,31 +969,13 @@ contract Demountain is ERC20, Ownable {
         _updateDaily();
 
         require(stakeSellingIsPaused == false, "Paused");
-        require(
-            mapMemberStake[sellerAddress][stakeId].userAddress != msg.sender,
-            "no self buy"
-        );
-        require(
-            mapMemberStake[sellerAddress][stakeId].userAddress == sellerAddress,
-            "Unauthorized"
-        );
-        require(
-            mapMemberStake[sellerAddress][stakeId].stake_hasSold == false,
-            "Stake has been sold"
-        );
-        require(
-            mapMemberStake[sellerAddress][stakeId].stake_forSell == true,
-            "Stake is not for sell"
-        );
+        require( mapMemberStake[sellerAddress][stakeId].userAddress != msg.sender, "no self buy");
+        require( mapMemberStake[sellerAddress][stakeId].userAddress == sellerAddress, "Unauthorized");
+        require( mapMemberStake[sellerAddress][stakeId].stake_hasSold == false, "Stake has been sold");
+        require( mapMemberStake[sellerAddress][stakeId].stake_forSell == true, "Stake is not for sell");
         uint256 priceP = msg.value;
-        require(
-            mapMemberStake[sellerAddress][stakeId].price == priceP,
-            "Not enough funds"
-        );
-        require(
-            mapMemberStake[sellerAddress][stakeId].endDay > currentDay,
-            "Stake ended"
-        );
+        require( mapMemberStake[sellerAddress][stakeId].price == priceP, "Not enough funds");
+        require( mapMemberStake[sellerAddress][stakeId].endDay > currentDay, "Stake ended");
 
         lobbyEntry[currentDay] +=
             (mapMemberStake[sellerAddress][stakeId].price * 8) /
@@ -1320,37 +1094,16 @@ contract Demountain is ERC20, Ownable {
      * @param returnAmount amount of BNB loan return
      * @param loanDuration duration of requesting loan
      */
-    function getLoanOnStake(
-        uint256 stakeId,
-        uint256 loanAmount,
-        uint256 returnAmount,
-        uint256 loanDuration
-    ) external {
+    function getLoanOnStake( uint256 stakeId, uint256 loanAmount, uint256 returnAmount, uint256 loanDuration) external {
         _updateDaily();
 
         require(loaningIsPaused == false, "Paused");
-        require(
-            loanAmount < returnAmount,
-            "Loan return must be higher than loan amount"
-        );
+        require(loanAmount < returnAmount,"Loan return must be higher than loan amount");
         require(loanDuration >= 4, "Lowest loan duration is 4 days");
-        require(
-            mapMemberStake[msg.sender][stakeId].userAddress == msg.sender,
-            "Unauthorized"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_hasLoan == false,
-            "Stake has an active loan on it"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_hasSold == false,
-            "Stake has been sold"
-        );
-        require(
-            mapMemberStake[msg.sender][stakeId].endDay - loanDuration >
-                currentDay,
-            "Invalid duration"
-        );
+        require(mapMemberStake[msg.sender][stakeId].userAddress == msg.sender,"Unauthorized");
+        require(mapMemberStake[msg.sender][stakeId].stake_hasLoan == false,"Stake has an active loan on it");
+        require(mapMemberStake[msg.sender][stakeId].stake_hasSold == false,"Stake has been sold");
+        require(mapMemberStake[msg.sender][stakeId].endDay - loanDuration > currentDay,"Invalid duration");
 
         /* calc stake divs */
         uint256 stakeDivs = calcStakeCollecting(msg.sender, stakeId);
@@ -1573,12 +1326,7 @@ contract Demountain is ERC20, Ownable {
      * @param lenderLendId id of the lends that a lender has given out (different from stakeId)
      * @param stakeId id of a loaner's stake for that the loaner requested a loan and received a lend
      */
-    function updateFinishedLoan(
-        address lenderAddress,
-        address loanerAddress,
-        uint256 lenderLendId,
-        uint256 stakeId
-    ) internal {
+    function updateFinishedLoan(address lenderAddress,address loanerAddress,uint256 lenderLendId,uint256 stakeId) internal {
         _updateDaily();
 
         require(
@@ -1586,8 +1334,7 @@ contract Demountain is ERC20, Ownable {
             "Stake does not have an active loan on it"
         );
         require(
-            currentDay >=
-                mapRequestingLoans[loanerAddress][stakeId].lend_endDay,
+            currentDay >= mapRequestingLoans[loanerAddress][stakeId].lend_endDay,
             "Due date not yet reached"
         );
         require(
@@ -1603,9 +1350,7 @@ contract Demountain is ERC20, Ownable {
             "Stake doesn't have active loan"
         );
         require(
-            mapRequestingLoans[loanerAddress][stakeId].lenderAddress ==
-                lenderAddress,
-            "Unauthorized"
+            mapRequestingLoans[loanerAddress][stakeId].lenderAddress == lenderAddress,"Unauthorized"
         );
         require(
             mapRequestingLoans[loanerAddress][stakeId].lenderLendId ==
