@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.9;
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address payable) {
@@ -376,8 +376,7 @@ contract Demountain is ERC20, Ownable {
         uint256 overall_collectedDivs;
     }
     // new map for every user's overall data
-    mapping(address => memberLobby_overallData)
-        public mapMemberLobby_overallData;
+    mapping(address => memberLobby_overallData) public mapMemberLobby_overallData;
     // total lobby entry
     uint256 public overall_lobbyEntry;
     // total staked tokens
@@ -1082,8 +1081,7 @@ contract Demountain is ERC20, Ownable {
     uint256 public lendStakeRequestCount;
     mapping(uint256 => lendStakeData) public lendStakeRequests;
 
-    mapping(address => mapping(uint256 => loanRequest))
-        public mapRequestingLoans;
+    mapping(address => mapping(uint256 => loanRequest)) public mapRequestingLoans;
     mapping(address => mapping(uint256 => lendInfo)) public mapLenderInfo;
     mapping(address => uint256) public lendersPaidAmount; // total amounts of paid to lender
 
@@ -1109,20 +1107,14 @@ contract Demountain is ERC20, Ownable {
         uint256 stakeDivs = calcStakeCollecting(msg.sender, stakeId);
 
         /* max amount of possible stake return can not be higher than stake's divs */
-        require(
-            returnAmount <= stakeDivs,
-            "Return amount greater than Dividends"
-        );
+        require( returnAmount <= stakeDivs, "Return amount greater than Dividends");
 
         /* if stake is for sell, remove it from sell requests */
         if (mapMemberStake[msg.sender][stakeId].stake_forSell == true) {
             cancelSellStakeRequest(stakeId);
         }
 
-        require(
-            mapMemberStake[msg.sender][stakeId].stake_forSell == false,
-            "Stake for sale"
-        );
+        require( mapMemberStake[msg.sender][stakeId].stake_forSell == false, "Stake for sale");
 
         mapMemberStake[msg.sender][stakeId].stake_forLoan = true;
 
@@ -1185,11 +1177,7 @@ contract Demountain is ERC20, Ownable {
      * @param stakeId stake id
      * @param amount lend amount that is tranfered to the contract
      */
-    function lendOnStake(address loanerAddress, uint256 stakeId)
-        external
-        payable
-        nonReentrant
-    {
+    function lendOnStake(address loanerAddress, uint256 stakeId) external payable nonReentrant {
         _updateDaily();
 
         require(loaningIsPaused == false, "Paused");
@@ -1214,10 +1202,8 @@ contract Demountain is ERC20, Ownable {
             "Stake duration is finished"
         );
 
-        uint256 loanAmount = mapRequestingLoans[loanerAddress][stakeId]
-            .loanAmount;
-        uint256 returnAmount = mapRequestingLoans[loanerAddress][stakeId]
-            .returnAmount;
+        uint256 loanAmount = mapRequestingLoans[loanerAddress][stakeId].loanAmount;
+        uint256 returnAmount = mapRequestingLoans[loanerAddress][stakeId].returnAmount;
         uint256 rawAmount = msg.value;
 
         require(
@@ -1229,8 +1215,7 @@ contract Demountain is ERC20, Ownable {
         devShareOfStakeSellsAndLoanFee += theLoanFee / 2;
         lobbyEntry[currentDay] += theLoanFee / 2;
 
-        mapMemberStake[loanerAddress][stakeId]
-            .loansReturnAmount += returnAmount;
+        mapMemberStake[loanerAddress][stakeId].loansReturnAmount += returnAmount;
         mapMemberStake[loanerAddress][stakeId].stake_hasLoan = true;
         mapMemberStake[loanerAddress][stakeId].stake_forLoan = false;
 
@@ -1240,22 +1225,15 @@ contract Demountain is ERC20, Ownable {
         mapRequestingLoans[loanerAddress][stakeId].loanIsPaid = false;
         mapRequestingLoans[loanerAddress][stakeId].lenderAddress = msg.sender;
         mapRequestingLoans[loanerAddress][stakeId].lenderLendId = lenderLendId;
-        mapRequestingLoans[loanerAddress][stakeId].lend_startDay =
-            currentDay +
-            1;
-        mapRequestingLoans[loanerAddress][stakeId].lend_endDay =
-            currentDay +
-            1 +
-            mapRequestingLoans[loanerAddress][stakeId].duration;
+        mapRequestingLoans[loanerAddress][stakeId].lend_startDay = currentDay + 1;
+        mapRequestingLoans[loanerAddress][stakeId].lend_endDay = currentDay + 1 + mapRequestingLoans[loanerAddress][stakeId].duration;
 
         mapLenderInfo[msg.sender][lenderLendId].lenderAddress = msg.sender;
         mapLenderInfo[msg.sender][lenderLendId].loanerAddress = loanerAddress;
         mapLenderInfo[msg.sender][lenderLendId].lenderLendId = lenderLendId; // not same with the stake id on "mapRequestingLoans"
         mapLenderInfo[msg.sender][lenderLendId].loanAmount = loanAmount;
         mapLenderInfo[msg.sender][lenderLendId].returnAmount = returnAmount;
-        mapLenderInfo[msg.sender][lenderLendId].endDay = mapRequestingLoans[
-            loanerAddress
-        ][stakeId].lend_endDay;
+        mapLenderInfo[msg.sender][lenderLendId].endDay = mapRequestingLoans[loanerAddress][stakeId].lend_endDay;
 
         LoanedFunds[loanerAddress] += (rawAmount * 98) / 100;
         LendedFunds[mapRequestingLoans[loanerAddress][stakeId].lenderAddress] +=
