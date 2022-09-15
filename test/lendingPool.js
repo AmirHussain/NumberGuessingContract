@@ -2,8 +2,9 @@ const { time, loadFixture } = require('@nomicfoundation/hardhat-network-helpers'
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
+const { bigToDecimal, decimalToBig } = require('./utils/helper');
 
-describe('Lock', function () {
+describe('Lending contract test cases', function () {
   let owner, user1, user2, user3, user4, restUsers;
   let weth, fWeth, dai, fDai, lending;
 
@@ -17,33 +18,64 @@ describe('Lock', function () {
     console.log('OWNER ', owner.address);
     console.log('USER1 ', user1.address);
     console.log('USER2 ', user2.address);
-    console.log('USER2 ', user3.address);
   });
-  it('1. deploying all tokens', async function () {
-    // WETH = await ethers.getContractFactory('wEth');
-    // weth = await WETH.deploy();
 
-    // FWETH = await ethers.getContractFactory('fWeth');
-    // fWeth = await FWETH.deploy();
+  it('1. deploying tokens and lending', async function () {
+    ERC20 = await ethers.getContractFactory('customERC20');
+    weth = await ERC20.deploy('Wrapped Ether', 'WETH');
+    fWeth = await ERC20.deploy('Pledged Wrapped Ether', 'fWETH');
+    dai = await ERC20.deploy('Dai Stable Coin', 'DAI');
+    fDai = await ERC20.deploy('Dai Stable Coin', 'fDAI');
+    console.log(weth.address);
 
-    // DAI = await ethers.getContractFactory('dai');
-    // dai = await DAI.deploy();
-
-    // FDAI = await ethers.getContractFactory('fDai');
-    // fDai = await FDAI.deploy();
-    
-    
-    
-    // LENDING = await ethers.getContractFactory('LendingPool');
+    LENDING = await ethers.getContractFactory('LendingPool');
     // lending = await LENDING.deploy(weth.address, fWeth.address, dai.address, fDai.address);
+    lending = await LENDING.deploy();
+    console.log('Lending address => ', lending.address);
+    await weth.setAuthorisedMinter(lending.address, true);
+    await fWeth.setAuthorisedMinter(lending.address, true);
+    await dai.setAuthorisedMinter(lending.address, true);
+    await fDai.setAuthorisedMinter(lending.address, true);
+    console.log('lending is isAuthorisedMinter => ', await dai.isAuthorisedMinter(lending.address));
+  });
 
-    // console.log('weth contract address', weth.address);
-    // console.log('fWeth contract address', fWeth.address);
-    // console.log('dai contract address', dai.address);
-    // console.log('fDai contract address', fDai.address);
 
-    // console.log('lending contract address', lending.address);
 
+  it('2 checking balances and transfering some tokens', async function () {
+    console.log('Owner balance', bigToDecimal(await weth.balanceOf(owner.address)));
+
+    await weth.transfer(user1.address, decimalToBig('100'));
+    await weth.transfer(user2.address, decimalToBig('100'));
+    await weth.transfer(lending.address, decimalToBig('100'));
+    console.log('user1 balance =>', bigToDecimal(await weth.balanceOf(user1.address)));
+    console.log('user2 balance =>', bigToDecimal(await weth.balanceOf(user2.address)));
+    console.log('lending Address balance =>', bigToDecimal(await weth.balanceOf(lending.address)));
+  });
+
+
+
+  it('3. user1 lend 50 weth lendFunction test', async function () {
+    const symbol = await weth.symbol();
+    console.log('lending balance before lend =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    await weth.approve(lending.address,decimalToBig('50'))
+    console.log('owner  balance before lend =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    await lending.lend(symbol, decimalToBig('50'), '2', weth.address);
+    console.log('lending balance after lend =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    console.log('owner  balance after lend =>', bigToDecimal(await weth.balanceOf(owner.address)));
+
+    let lendedAssetDetails = await lending.lendedAssetDetails(symbol);
+    // console.log(lendedAssetDetails);
+  });
+
+
+  it('4 redeem test', async function () {
+    const symbol = await weth.symbol();
+    await lending.redeem(symbol, decimalToBig('45'), weth.address);
+    console.log('lending balance after redeem =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    let lendedAssetDetails = await lending.lendedAssetDetails(symbol);
+    let bal = await lending.poolTokensBal(weth.address)
+    console.log("poolTokensBal => ",bigToDecimal(bal) )
+    // console.log(lendedAssetDetails);
   });
 
   //   async function deployOneYearLockFixture() {

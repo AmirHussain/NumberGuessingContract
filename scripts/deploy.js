@@ -1,30 +1,45 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
-const hre = require("hardhat");
+
+const {ethers,network} = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-  const unlockTime = currentTimestampInSeconds + ONE_YEAR_IN_SECS;
-
-  const lockedAmount = hre.ethers.utils.parseEther("1");
-
-  const Lock = await hre.ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-  await lock.deployed();
-
-  console.log(
-    `Lock with 1 ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+  if (network.name != "goerli")  {
+    console.warn("This needs to be on GOERLI");
+    process.exit(1)
+}
+const [owner] = await ethers.getSigners();
+console.log(network.name);
+console.log("owner",await owner.getAddress());
+await deployStuff();
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
+async function deployStuff() {
+  const [deployer] = await ethers.getSigners();
+  console.log("deployer : ",deployer.address)
+
+  lendingAddress = 0
+  
+  let LENDING = await ethers.getContractFactory("LendingPool")
+
+  if (lendingAddress == 0) {
+      console.log("deploy lending on GOERLI")
+      lending = await LENDING.deploy()
+     
+      console.log("lending contract : ",lending.address," tx ",lending.deployTransaction.hash)
+      lendingAddress = lending.address
+      console.log("deployed lending : ",lending.deployTransaction.hash, lendingAddress)
+      recipt = await lending.deployTransaction.wait(8)
+      console.log(recipt.status == 1 ? "success": "failed")
+      await run("verify:verify", {
+          address: lendingAddress,
+          constructorArguments: []
+      });
+
+  } else {
+      lending = await LENDING.attach(lendingAddress)
+  }
+
+}
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
