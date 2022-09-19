@@ -25,7 +25,7 @@ describe('Lending contract test cases', function () {
     weth = await ERC20.deploy('Wrapped Ether', 'WETH');
     fWeth = await ERC20.deploy('Pledged Wrapped Ether', 'fWETH');
     dai = await ERC20.deploy('Dai Stable Coin', 'DAI');
-    fDai = await ERC20.deploy('Dai Stable Coin', 'fDAI');
+    fDai = await ERC20.deploy('Pledged Dai Stable Coin', 'fDAI');
     console.log(weth.address);
 
     LENDING = await ethers.getContractFactory('LendingPool');
@@ -64,7 +64,7 @@ describe('Lending contract test cases', function () {
     console.log('owner  balance after lend =>', bigToDecimal(await weth.balanceOf(owner.address)));
 
     let lendedAssetDetails = await lending.lendedAssetDetails(symbol);
-    // console.log(lendedAssetDetails);
+    console.log(lendedAssetDetails);
   });
 
 
