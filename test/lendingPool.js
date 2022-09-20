@@ -63,20 +63,34 @@ describe('Lending contract test cases', function () {
     console.log('lending balance after lend =>', bigToDecimal(await weth.balanceOf(lending.address)));
     console.log('owner  balance after lend =>', bigToDecimal(await weth.balanceOf(owner.address)));
 
-    let lendedAssetDetails = await lending.lendedAssetDetails(symbol);
-    console.log(lendedAssetDetails);
+    let lenderIds = await lending.getLenderId(symbol);
+    let lendedAssetDetails = await lending.getLenderAsset(1);
+    let lenderShare = await lending.getLenderShare(symbol);
+    console.log(bigToDecimal(lenderShare));
   });
 
 
   it('4 redeem test', async function () {
     const symbol = await weth.symbol();
-    await lending.redeem(symbol, decimalToBig('45'), weth.address);
-    console.log('lending balance after redeem =>', bigToDecimal(await weth.balanceOf(lending.address)));
-    let lendedAssetDetails = await lending.lendedAssetDetails(symbol);
-    let bal = await lending.poolTokensBal(weth.address)
-    console.log("poolTokensBal => ",bigToDecimal(bal) )
+    await lending.redeem(symbol, decimalToBig('45'), weth.address,1);
+
+    let lenderIds = await lending.getLenderId(symbol);
+    let lendedAssetDetails = await lending.getLenderAsset(1);
+    let lenderShare = await lending.getLenderShare(symbol);
+    console.log(bigToDecimal(lenderShare));
     // console.log(lendedAssetDetails);
   });
+
+  it('5 Borrow percentage test', async function () {
+    console.log('setting percentage to the contract as 60% as borrow limit')
+    await lending.setPercentage(decimalToBig('60'));
+    let per = await lending.checkPercentage('100');
+    console.log("=> percentage on 1000 is => ",bigToDecimal(per) );
+    // console.log(lendedAssetDetails);
+    let ethNow = await lending.getLatestPrice();
+    // console.log('eth price=>',ethNow)
+  });
+
 
   //   async function deployOneYearLockFixture() {
   //     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
