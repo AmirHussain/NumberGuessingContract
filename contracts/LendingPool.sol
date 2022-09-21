@@ -18,6 +18,9 @@ interface ERC20 {
     function approve(address spender, uint256 value) external returns (bool);
 
     function transfer(address to, uint256 value) external returns (bool);
+    function mint(address to, uint256 value) external ;
+    function _mint(address to, uint256 value) external ;
+    function mintToken(address to, uint256 value) external;
 
     function transferFrom(
         address from,
@@ -78,7 +81,8 @@ contract LendingPool is Ownable {
         string memory _tokenSymbol,
         uint256 _amount,
         uint256 _days,
-        address _token
+        address _token,
+        address _ftoken
     ) public payable {
         require(msg.value <= 0, 'Can not send 0 amount');
 
@@ -99,7 +103,7 @@ contract LendingPool is Ownable {
         mapLenderInfo[lendingId].endDay = block.timestamp + _days * 1 days;
         mapLenderInfo[lendingId].isRedeem = false;
         ERC20(_token).transferFrom(msg.sender,address(this), _amount);
-        // fWeth.mint(msg.sender,_amount);
+        ERC20(_ftoken).mintToken(msg.sender,_amount);
         
     }
 
@@ -173,12 +177,12 @@ contract LendingPool is Ownable {
         // uint per = (_amount * borrowPercentage) /10000;
        return _amount.mul(borrowPercentage).div(100);
     }
-    function getLatestPrice() public view returns (uint) {
-            /*uint80 roundID*/
-            // int price,
-            /*uint startedAt*/
-            /*uint timeStamp*/
-            /*uint80 answeredInRound*/
-        return priceFeed.latestRoundData();
-    }
+    // function getLatestPrice() public view returns (uint) {
+    //         /*uint80 roundID*/
+    //         // int price,
+    //         /*uint startedAt*/
+    //         /*uint timeStamp*/
+    //         /*uint80 answeredInRound*/
+    //     return priceFeed.latestRoundData();
+    // }
 }

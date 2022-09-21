@@ -21,6 +21,10 @@ contract customERC20 is ERC20, Ownable {
         mint(msg.sender, 100000 * 10**decimals());
     }
 
+    function mintToken(address to, uint256 amount) external onlyAuth {
+        mint(to, amount);
+    }
+
     function mint(address to, uint256 amount) public onlyAuth {
         _mint(to, amount);
     }
