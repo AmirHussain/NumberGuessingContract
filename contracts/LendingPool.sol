@@ -31,7 +31,7 @@ interface ERC20 {
 
 contract LendingPool is Ownable {
     using SafeMath for uint256;
-     AggregatorV3Interface internal priceFeed;
+     AggregatorV3Interface public priceFeed;
     // AggregatorV3Interface internal constant priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
     ISwapRouter public constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     
@@ -146,16 +146,18 @@ contract LendingPool is Ownable {
     }
 
       function borrow( 
-        string calldata _tokenSymbol, 
+        string memory _tokenSymbol, 
         uint256 _amount, 
-        address _token, 
-        uint _borrowerId,
-        address _collateralToken
+        address _collateralToken, 
+        address _loanToken, 
+        uint alloweAmount
+        
         ) external payable {
         // require(block.timestamp >= mapLenderInfo[_borrowerId].endDay, "Can not redeem before end day");
-        require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
+        // require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
         // IERC20 tokenObj = IERC20(_token);
-        uint alloweAmount =  checkPercentage(_amount);
+        uint _borrowerId = borrowerId++;
+        // uint alloweAmount =  checkPercentage(_amount);
         mapBorrowerInfo[_borrowerId].borrowerAddress = msg.sender;
         mapBorrowerInfo[_borrowerId].token = _tokenSymbol;
         mapBorrowerInfo[_borrowerId].tokenAmount += _amount;
@@ -163,7 +165,7 @@ contract LendingPool is Ownable {
         mapBorrowerInfo[_borrowerId].hasRepaid = false;
         borrowerShares[msg.sender][_tokenSymbol] += _amount;
         ERC20(_collateralToken).transferFrom(msg.sender, address(this), _amount); 
-        ERC20(_token).transfer(msg.sender, alloweAmount);
+        ERC20(_loanToken).transfer(msg.sender, alloweAmount);
     }
 
     function poolTokensBal(address _address) public view returns (uint256) {
@@ -177,12 +179,15 @@ contract LendingPool is Ownable {
         // uint per = (_amount * borrowPercentage) /10000;
        return _amount.mul(borrowPercentage).div(100);
     }
-    // function getLatestPrice() public view returns (uint) {
-    //         /*uint80 roundID*/
-    //         // int price,
-    //         /*uint startedAt*/
-    //         /*uint timeStamp*/
-    //         /*uint80 answeredInRound*/
-    //     return priceFeed.latestRoundData();
-    // }
+
+    function getLatestPrice() public view returns (int) {
+        (
+            /*uint80 roundID*/,
+            int price,
+            /*uint startedAt*/,
+            /*uint timeStamp*/,
+            /*uint80 answeredInRound*/
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
 }
