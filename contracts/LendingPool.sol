@@ -19,9 +19,7 @@ interface ERC20 {
 
     function transfer(address to, uint256 value) external returns (bool);
     function mint(address to, uint256 value) external ;
-    function _mint(address to, uint256 value) external ;
-    function mintToken(address to, uint256 value) external;
-
+   
     function transferFrom(
         address from,
         address to,
@@ -31,7 +29,9 @@ interface ERC20 {
 
 contract LendingPool is Ownable {
     using SafeMath for uint256;
-     AggregatorV3Interface public priceFeed;
+     AggregatorV3Interface public priceCollateral;
+     AggregatorV3Interface public priceLoan;
+
     // AggregatorV3Interface internal constant priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
     ISwapRouter public constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     
@@ -48,6 +48,7 @@ contract LendingPool is Ownable {
         address lenderAddress; // address of the user that lended
         string token; //eth,Matic ,bnb
         uint256 tokenAmount; //1
+        uint256 SuppliedAmount; //1
         uint256 startDay; // time when he lended
         uint256 endDay; // when lending period ends
         bool isRedeem; // if true is means he has something in pool if false it means he/she redeem
@@ -62,7 +63,7 @@ contract LendingPool is Ownable {
     //===========================================================================
     struct borrowMember {
         address borrowerAddress; 
-        string token; 
+        string collateralToken; 
         uint256 tokenAmount; 
         uint256 borrowDay; 
         uint256 endDay; 
@@ -74,7 +75,6 @@ contract LendingPool is Ownable {
 
 
     constructor() {
-         priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
     }
 
     function lend(
@@ -98,13 +98,14 @@ contract LendingPool is Ownable {
 
         mapLenderInfo[lendingId].lenderAddress = msg.sender;
         mapLenderInfo[lendingId].token = _tokenSymbol;
+        mapLenderInfo[lendingId].SuppliedAmount = _amount;
         mapLenderInfo[lendingId].tokenAmount = _amount;
         mapLenderInfo[lendingId].startDay = block.timestamp;
         mapLenderInfo[lendingId].endDay = block.timestamp + _days * 1 days;
         mapLenderInfo[lendingId].isRedeem = false;
         ERC20(_token).transferFrom(msg.sender,address(this), _amount);
-        ERC20(_ftoken).mintToken(msg.sender,_amount);
-        
+        ERC20(_ftoken).mint(msg.sender,_amount);
+
     }
 
     // function isLenderExist (address _address) public view return (bool){
@@ -146,24 +147,26 @@ contract LendingPool is Ownable {
     }
 
       function borrow( 
-        string memory _tokenSymbol, 
+        string memory _collateralTokenSymbol, 
         uint256 _amount, 
         address _collateralToken, 
         address _loanToken, 
-        uint alloweAmount
+        address loanAggregator,
+        address collateralAggregator
         
         ) external payable {
         // require(block.timestamp >= mapLenderInfo[_borrowerId].endDay, "Can not redeem before end day");
         // require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
         // IERC20 tokenObj = IERC20(_token);
         uint _borrowerId = borrowerId++;
-        // uint alloweAmount =  checkPercentage(_amount);
+        borrowerIds[msg.sender][_collateralTokenSymbol].push(lendingId);
+        uint alloweAmount =  getValueInDollar(loanAggregator,collateralAggregator,_amount);
         mapBorrowerInfo[_borrowerId].borrowerAddress = msg.sender;
-        mapBorrowerInfo[_borrowerId].token = _tokenSymbol;
+        mapBorrowerInfo[_borrowerId].collateralToken = _collateralTokenSymbol;
         mapBorrowerInfo[_borrowerId].tokenAmount += _amount;
         mapBorrowerInfo[_borrowerId].borrowDay = block.timestamp;
         mapBorrowerInfo[_borrowerId].hasRepaid = false;
-        borrowerShares[msg.sender][_tokenSymbol] += _amount;
+        borrowerShares[msg.sender][_collateralTokenSymbol] += _amount;
         ERC20(_collateralToken).transferFrom(msg.sender, address(this), _amount); 
         ERC20(_loanToken).transfer(msg.sender, alloweAmount);
     }
@@ -177,17 +180,41 @@ contract LendingPool is Ownable {
     }
     function checkPercentage(uint _amount) public view returns(uint){
         // uint per = (_amount * borrowPercentage) /10000;
-       return _amount.mul(borrowPercentage).div(100);
+       return _amount.mul(borrowPercentage).div(1e18);
     }
 
-    function getLatestPrice() public view returns (int) {
+
+     function getBorrowerId ( string memory _collateralTokenSymbol) public view returns (uint [] memory){
+        return borrowerIds[msg.sender][_collateralTokenSymbol];
+    }
+    function getBorrowerDetails (uint _id) public view returns (borrowMember memory){
+        return mapBorrowerInfo[_id];
+    }
+    
+     function getBorrowerShare ( string memory _collateralTokenSymbol) public view returns (uint){
+        return borrowerShares[msg.sender][_collateralTokenSymbol];
+    }
+
+    function getValueInDollar(address loanTokenAggregator, address collateralTokenAggregator,uint collateralAmount) internal returns (uint)
+    {    
+        // convert collateral to desired exchange
+         priceCollateral = AggregatorV3Interface(collateralTokenAggregator);
+         (,int price,,,)=priceCollateral.latestRoundData();
+        // calculate 70% of collateral to get loan amount
+       uint conversionAmount= checkPercentage(collateralAmount.mul(uint(price)));
+
+        // convert loan to desired exchange
+        priceLoan = AggregatorV3Interface(loanTokenAggregator);
         (
             /*uint80 roundID*/,
-            int price,
+            int loanPrice,
             /*uint startedAt*/,
             /*uint timeStamp*/,
             /*uint80 answeredInRound*/
-        ) = priceFeed.latestRoundData();
-        return price;
+        ) = priceLoan.latestRoundData();
+
+        uint returnLoanPrice=uint(conversionAmount).div(uint(loanPrice));
+
+        return returnLoanPrice;
     }
 }
