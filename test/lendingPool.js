@@ -85,11 +85,28 @@ describe('Lending contract test cases', function () {
     console.log('setting percentage to the contract as 60% as borrow limit')
     await lending.setPercentage(decimalToBig('60'));
     let per = await lending.checkPercentage('100');
-    console.log("=> percentage on 1000 is => ",bigToDecimal(per) );
+    console.log("=> percentage on 100 is => ",bigToDecimal(per) );
     // console.log(lendedAssetDetails);
-    let ethNow = await lending.getLatestPrice();
+    // let ethNow = await lending.getLatestPrice();
     // console.log('eth price=>',ethNow)
   });
+
+  it('5 Borrowing test', async function () {
+    const ethSymbol = await weth.symbol();
+    const daiSymbol = await dai.symbol();
+    console.log('owner eth balance before borrow =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('lending eth balance before borrow =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    console.log('lending dai balance before borrow =>', bigToDecimal(await dai.balanceOf(dai.address)));
+    await dai.approve(lending.address,decimalToBig('10'))
+    await lending.borrow(daiSymbol,  decimalToBig('10'), dai.address , weth.address, decimalToBig('6') );
+    console.log('owner dai balance after borrow =>', bigToDecimal(await dai.balanceOf(owner.address)));
+    console.log('lending dai balance after borrow =>', bigToDecimal(await dai.balanceOf(lending.address)));
+    console.log('lending eth balance after borrow =>', bigToDecimal(await weth.balanceOf(lending.address)));
+
+    // console.log('lending balance after lend =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    // console.log('owner  balance after lend =>', bigToDecimal(await weth.balanceOf(owner.address)));
+  });
+
 
 
   //   async function deployOneYearLockFixture() {

@@ -5,7 +5,10 @@ require("@nomicfoundation/hardhat-toolbox");
 module.exports = {
   defaultNetwork: "hardhat",
   networks:{
-    hardhat: {},
+    hardhat: {
+      // chainId:31337,
+      // forking:{url:'url'}
+    },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.MAINNET_INFURA_ID}`,
       accounts: [process.env.TEST_KEY]
