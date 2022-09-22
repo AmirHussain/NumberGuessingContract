@@ -36,17 +36,23 @@ describe('Lending contract test cases', function () {
     await fWeth.setAuthorisedMinter(lending.address, true);
     await dai.setAuthorisedMinter(lending.address, true);
     await fDai.setAuthorisedMinter(lending.address, true);
-    console.log('lending is isAuthorisedMinter => ', await dai.isAuthorisedMinter(lending.address));
+    expect(await weth.isAuthorisedMinter(lending.address)).to.equal(true)
+    expect(await fWeth.isAuthorisedMinter(lending.address)).to.equal(true)
+    expect(await dai.isAuthorisedMinter(lending.address)).to.equal(true)
+    expect(await fDai.isAuthorisedMinter(lending.address)).to.equal(true)
   });
-
-
-
+  
+  
+  
   it('2 checking balances and transfering some tokens', async function () {
     console.log('Owner balance', bigToDecimal(await weth.balanceOf(owner.address)));
+    expect(await fDai.isAuthorisedMinter(lending.address)).to.equal(true)
 
     await weth.transfer(user1.address, decimalToBig('100'));
     await weth.transfer(user2.address, decimalToBig('100'));
     await weth.transfer(lending.address, decimalToBig('100'));
+    await dai.transfer(lending.address, decimalToBig('10000'));
+
     console.log('user1 balance =>', bigToDecimal(await weth.balanceOf(user1.address)));
     
     console.log('user1 balance =>', bigToDecimal(await weth.balanceOf(user1.address)));
@@ -77,7 +83,8 @@ describe('Lending contract test cases', function () {
 
   it('4 redeem test', async function () {
     const symbol = await weth.symbol();
-    await lending.redeem(symbol, decimalToBig('45'), weth.address,1);
+    await fWeth.approve(lending.address,decimalToBig('20'))
+    await lending.redeem(symbol, decimalToBig('20'), weth.address,1);
 
     let lenderIds = await lending.getLenderId(symbol);
     let lendedAssetDetails = await lending.getLenderAsset(1);
@@ -85,16 +92,38 @@ describe('Lending contract test cases', function () {
     console.log(bigToDecimal(lenderShare));
     // console.log(lendedAssetDetails);
   });
+  it('5 loan mock test', async function () {
+      await lending.setPercentage(decimalToBig('70'));
+   let loadAmount = await lending.getLoanAmount2(
+    '1000',    // collletaral name and amount dia 
+    '1',  // colletaral price 1
+    '1000',     // load token eth with price 1000
+     );
+    console.log("loadAmount => ", bigToDecimal(loadAmount));
+    // console.log(lendedAssetDetails);
+  });
 
-  // it('5 Borrow percentage test', async function () {
-  //   console.log('setting percentage to the contract as 60% as borrow limit')
-  //   await lending.setPercentage(decimalToBig('60'));
-  //   let per = await lending.checkPercentage('100');
-  //   console.log("=> percentage on 1000 is => ",bigToDecimal(per) );
-  //   // console.log(lendedAssetDetails);
-  //   let ethNow = await lending.getLatestPrice();
-  //   // console.log('eth price=>',ethNow)
-  // });
+
+  it('6 borrow test', async function () {
+    const symbol = await weth.symbol();
+    console.log('owner eth balance before borrow =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(owner.address)));
+    await weth.approve(lending.address,10)
+    await lending.borrow(symbol,10, weth.address,dai.address);
+    console.log('owner  balance before borrow =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(owner.address)));
+    
+  });
+  
+  it('7 repay test', async function () {
+    const symbol = await weth.symbol();
+    console.log('owner eth balance before borrow =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(lending.address)));
+    await dai.approve(lending.address,7000)
+    await lending.repay(symbol,10, weth.address, dai.address, 7000,0);
+    console.log('owner eth balance before borrow =>', bigToDecimal(await weth.balanceOf(lending.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(lending.address)));
+  });
 
 
 
