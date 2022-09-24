@@ -66,8 +66,11 @@ contract LendingPool is Ownable {
     //===========================================================================
     struct borrowMember {
         address borrowerAddress;
+        string loanToken;
+        uint256 borrowAmount;
+        uint256 loanAmount;
         string collateralToken;
-        uint256 tokenAmount;
+        uint256 collateralAmount;
         uint256 borrowDay;
         uint256 endDay;
         bool hasRepaid;
@@ -145,46 +148,50 @@ contract LendingPool is Ownable {
     }
 
     function borrow(
-        string memory _collateralTokenSymbol,
-        uint256 _collateralAmount,
+        string memory _loanTokenSymbol,
+        uint256 _loanAmount,
+        address _loanToken,
+        address loanAggregator,
+        string  memory _collateralTokenSymbol,
         address _collateralToken,
-        address _loanToken
-        // address loanAggregator,
-        // address collateralAggregator
+        address collateralAggregator,
+        uint256 decimals
     ) external payable {
         // require(block.timestamp >= mapLenderInfo[_borrowerId].endDay, "Can not redeem before end day");
         // require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
         // IERC20 tokenObj = IERC20(_token);
         uint256 _borrowerId = borrowerId++;
-        borrowerIds[msg.sender][_collateralTokenSymbol].push(lendingId);
-        // uint alloweAmount =  getLoanAmount(loanAggregator,collateralAggregator,_collateralAmount);
-        uint alloweAmount =  getLoanAmount2(_collateralAmount,1000,1);
-        console.log("hardhat alloweAmount=>",alloweAmount);
+        borrowerIds[msg.sender][_loanTokenSymbol].push(lendingId);
+        uint _collateralAmount =  getColateralAmount(loanAggregator,collateralAggregator,_loanAmount,decimals);
+        // uint alloweAmount =  getLoanAmount(_collateralAmount,1000,1);
         mapBorrowerInfo[_borrowerId].borrowerAddress = msg.sender;
+        mapBorrowerInfo[_borrowerId].loanToken = _loanTokenSymbol;
         mapBorrowerInfo[_borrowerId].collateralToken = _collateralTokenSymbol;
-        mapBorrowerInfo[_borrowerId].tokenAmount += _collateralAmount;
+        mapBorrowerInfo[_borrowerId].borrowAmount += _loanAmount;
+        mapBorrowerInfo[_borrowerId].loanAmount += _loanAmount;
+        mapBorrowerInfo[_borrowerId].collateralAmount += _collateralAmount;
         mapBorrowerInfo[_borrowerId].borrowDay = block.timestamp;
         mapBorrowerInfo[_borrowerId].hasRepaid = false;
-        borrowerShares[msg.sender][_collateralTokenSymbol] += _collateralAmount;
+        borrowerShares[msg.sender][_loanTokenSymbol] += _collateralAmount;
         ERC20(_collateralToken).transferFrom(msg.sender, address(this), _collateralAmount);
-        ERC20(_loanToken).transfer(msg.sender, alloweAmount);
+        ERC20(_loanToken).transfer(msg.sender, _loanAmount);
     }
 
     function repay(
-        string memory _collateralTokenSymbol,
-        uint256 _collateralAmount,
-        address _collateralToken,
+        string memory _loanTokenSymbol,
+        address _collateral,
         address _loanToken,
-        uint _loanAmount,
+        uint256 _loanAmount,
         uint _borrowerId
     ) external payable {
         require(mapBorrowerInfo[_borrowerId].borrowerAddress == msg.sender, "Wrong owner");
-        if(mapBorrowerInfo[_borrowerId].tokenAmount ==_collateralAmount){
+        if(mapBorrowerInfo[_borrowerId].loanAmount ==_loanAmount){
            mapBorrowerInfo[_borrowerId].hasRepaid = true;
         }
-        mapBorrowerInfo[_borrowerId].tokenAmount -= _collateralAmount;
-        borrowerShares[msg.sender][_collateralTokenSymbol] -= _collateralAmount;
-        ERC20(_collateralToken).transfer(msg.sender, _collateralAmount);
+        mapBorrowerInfo[_borrowerId].loanAmount -= _loanAmount;
+        borrowerShares[msg.sender][_loanTokenSymbol] -= _loanAmount;
+        uint256 repayCollateralAmount= mapBorrowerInfo[_borrowerId].collateralAmount;
+        ERC20(_collateral).transfer(msg.sender,repayCollateralAmount);
         ERC20(_loanToken).transferFrom(msg.sender, address(this), _loanAmount);
     }
 
@@ -215,21 +222,35 @@ contract LendingPool is Ownable {
     }
 
 
-    function getLoanAmount(
+    function getColateralAmount(
         address loanTokenAggregator,
         address collateralTokenAggregator,
-        uint256 collateralAmount
+        uint256 loanAmount,
+        uint256 decimals
     ) public view returns (uint256) {
+        // 1dai=1usd
         AggregatorV3Interface CollateralPrice = AggregatorV3Interface(collateralTokenAggregator);
         (, int256 price, , , ) = CollateralPrice.latestRoundData();
 
+        // 1 eth = 1000usd;
         AggregatorV3Interface LoanPrice = AggregatorV3Interface(loanTokenAggregator);
         ( , int256 loanPrice,,,) = LoanPrice.latestRoundData();
 
-        uint256 amount = collateralAmount.mul(uint256(price));
-        uint256 percentage = amount.mul(borrowPercentage).div(100);
-        uint256 loadAmount = uint256(percentage).div(uint(loanPrice));
-        return loadAmount;
+        // 2eth X (1 eth = 1000usd)=2000
+        uint256 loanPriceInUSD=loanAmount.mul(uint256(loanPrice));
+    
+        // 28057
+        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100).div(borrowPercentage);
+
+
+
+           //   xdai=collateralAmountInUSD
+            //   x=collateralAmountInUSD/dai
+            //   x=28057/1
+        uint256 collateralAmount = uint256(collateralAmountInUSD).div(uint(price));
+
+        // 28057
+        return collateralAmount;
     }
 
     function getLoanAmount2(
