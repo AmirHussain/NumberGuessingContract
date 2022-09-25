@@ -231,37 +231,27 @@ contract LendingPool is Ownable {
         // 1dai=1usd
         AggregatorV3Interface CollateralPrice = AggregatorV3Interface(collateralTokenAggregator);
         (, int256 price, , , ) = CollateralPrice.latestRoundData();
-
-        // 1 eth = 1000usd;
         AggregatorV3Interface LoanPrice = AggregatorV3Interface(loanTokenAggregator);
         ( , int256 loanPrice,,,) = LoanPrice.latestRoundData();
 
-        // 2eth X (1 eth = 1000usd)=2000
         uint256 loanPriceInUSD=loanAmount.mul(uint256(loanPrice));
-    
-        // 28057
-        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100).div(borrowPercentage);
-
-
-
-           //   xdai=collateralAmountInUSD
-            //   x=collateralAmountInUSD/dai
-            //   x=28057/1
+        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100*10**decimals).div(borrowPercentage);
         uint256 collateralAmount = uint256(collateralAmountInUSD).div(uint(price));
-
-        // 28057
         return collateralAmount;
     }
 
-    function getLoanAmount2(
-        uint256 collateralAmount,
-        uint256 collateralTokenPrice,
-        uint256 loanTokenPrice
+
+    function getColateralAmount2(
+        uint256 loanAmount, // 1000 DAI
+        uint256 loanPrice,  // 1 * 1000 = 1000
+        uint256 colletaralPrice // 1DAI =  1USD
     ) public view returns (uint256) {
-        uint256 amount = collateralAmount.mul(collateralTokenPrice);
-        uint256 percentage = amount.mul(borrowPercentage).div(100);
-        uint256 price = uint256(percentage).div(loanTokenPrice);
-        return price;
+        
+        // eg: loanAmount = 1 eth & loanPrice $1000/eth
+        uint256 totalLoanInUSD = loanAmount.mul(loanPrice);
+        uint256 percentage = totalLoanInUSD.mul(100*10**18).div(borrowPercentage);
+        uint256 colletaralAmount = uint256(percentage).div(colletaralPrice);
+        return colletaralAmount;
     }
 
     function getAggregatorPrice(address _tokenAddress) public view returns (uint256) {
