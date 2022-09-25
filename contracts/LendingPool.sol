@@ -151,37 +151,34 @@ contract LendingPool is Ownable {
         string memory _loanTokenSymbol,
         uint256 _loanAmount,
         address _loanToken,
-        address loanAggregator,
         string  memory _collateralTokenSymbol,
         address _collateralToken,
-        address collateralAggregator,
-        uint256 decimals
+        uint256 _collateralAmount
     ) external payable {
         // require(block.timestamp >= mapLenderInfo[_borrowerId].endDay, "Can not redeem before end day");
         // require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
         // IERC20 tokenObj = IERC20(_token);
-        uint256 _borrowerId = borrowerId++;
+        borrowerId +=1;
         borrowerIds[msg.sender][_loanTokenSymbol].push(lendingId);
-        uint _collateralAmount =  getColateralAmount(loanAggregator,collateralAggregator,_loanAmount,decimals);
-        // uint alloweAmount =  getLoanAmount(_collateralAmount,1000,1);
-        mapBorrowerInfo[_borrowerId].borrowerAddress = msg.sender;
-        mapBorrowerInfo[_borrowerId].loanToken = _loanTokenSymbol;
-        mapBorrowerInfo[_borrowerId].collateralToken = _collateralTokenSymbol;
-        mapBorrowerInfo[_borrowerId].borrowAmount += _loanAmount;
-        mapBorrowerInfo[_borrowerId].loanAmount += _loanAmount;
-        mapBorrowerInfo[_borrowerId].collateralAmount += _collateralAmount;
-        mapBorrowerInfo[_borrowerId].borrowDay = block.timestamp;
-        mapBorrowerInfo[_borrowerId].hasRepaid = false;
+        mapBorrowerInfo[borrowerId].borrowerAddress = msg.sender;
+        mapBorrowerInfo[borrowerId].loanToken = _loanTokenSymbol;
+        mapBorrowerInfo[borrowerId].collateralToken = _collateralTokenSymbol;
+        mapBorrowerInfo[borrowerId].borrowAmount += _loanAmount;
+        mapBorrowerInfo[borrowerId].loanAmount += _loanAmount;
+        mapBorrowerInfo[borrowerId].collateralAmount += _collateralAmount;
+        mapBorrowerInfo[borrowerId].borrowDay = block.timestamp;
+        mapBorrowerInfo[borrowerId].hasRepaid = false;
         borrowerShares[msg.sender][_loanTokenSymbol] += _collateralAmount;
         ERC20(_collateralToken).transferFrom(msg.sender, address(this), _collateralAmount);
         ERC20(_loanToken).transfer(msg.sender, _loanAmount);
     }
 
+
     function repay(
         string memory _loanTokenSymbol,
-        address _collateral,
-        address _loanToken,
         uint256 _loanAmount,
+        address _loanToken,
+        address _collateral,
         uint _borrowerId
     ) external payable {
         require(mapBorrowerInfo[_borrowerId].borrowerAddress == msg.sender, "Wrong owner");
@@ -225,8 +222,7 @@ contract LendingPool is Ownable {
     function getColateralAmount(
         address loanTokenAggregator,
         address collateralTokenAggregator,
-        uint256 loanAmount,
-        uint256 decimals
+        uint256 loanAmount
     ) public view returns (uint256) {
         // 1dai=1usd
         AggregatorV3Interface CollateralPrice = AggregatorV3Interface(collateralTokenAggregator);
@@ -235,7 +231,7 @@ contract LendingPool is Ownable {
         ( , int256 loanPrice,,,) = LoanPrice.latestRoundData();
 
         uint256 loanPriceInUSD=loanAmount.mul(uint256(loanPrice));
-        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100*10**decimals).div(borrowPercentage);
+        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100*10**18).div(borrowPercentage);
         uint256 collateralAmount = uint256(collateralAmountInUSD).div(uint(price));
         return collateralAmount;
     }
@@ -252,6 +248,22 @@ contract LendingPool is Ownable {
         uint256 percentage = totalLoanInUSD.mul(100*10**18).div(borrowPercentage);
         uint256 colletaralAmount = uint256(percentage).div(colletaralPrice);
         return colletaralAmount;
+    }
+    function getColateralAmount3(
+        // address loanTokenAggregator,
+        // address collateralTokenAggregator,
+        uint256 loanAmount
+    ) public view returns (uint256) {
+        // need eth for Dai
+        // uint256 price = 99965123; //dai
+        uint256 price = 100000000; //dai
+        uint256 loanPrice = 100046579615; //price per eth
+        
+
+        uint256 loanPriceInUSD=loanAmount.mul(uint256(loanPrice));
+        uint256 collateralAmountInUSD = loanPriceInUSD.mul(100*10**18).div(borrowPercentage);
+        uint256 collateralAmount = uint256(collateralAmountInUSD).div(uint(price));
+        return collateralAmount;
     }
 
     function getAggregatorPrice(address _tokenAddress) public view returns (uint256) {
