@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy":"npx hardhat compile && npx hardhat run --network goerli scripts/deploy.js",
-    "test-lending":"hardhat test test/lendingPool.js --network hardhat"
+    "test-lending":"hardhat test test/lendingPool.js --network hardhat",
+    "test-governance":"hardhat test test/governance.js --network hardhat"
   },
   "author": "Jahanzaib",
   "license": "ISC",
