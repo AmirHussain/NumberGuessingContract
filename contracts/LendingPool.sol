@@ -29,13 +29,19 @@ interface ERC20 {
     ) external returns (bool);
 }
 
-contract LendingPool is Ownable {
+contract LendingPool is Ownable, Math {
     using SafeMath for uint256;
     //  AggregatorV3Interface public priceCollateral;
     //  AggregatorV3Interface public priceLoan;
 
     // AggregatorV3Interface internal constant priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
     ISwapRouter public constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    
+    mapping(address => uint256) public totalDeposit;
+    mapping(address => uint256) public reserve;
+    mapping(address => uint256) public totalDebt;
+    mapping(address => uint256) public totalVariableDebt;
+    mapping(address => uint256) public totalStableDebt;
 
     mapping(address => uint256) public lendingPoolTokenList;
     mapping(address => uint256) public lendersList;
@@ -51,8 +57,8 @@ contract LendingPool is Ownable {
         string token; //eth,Matic ,bnb
         uint256 tokenAmount; //1
         uint256 SuppliedAmount; //1
-        uint256 startDay; // time when he lended
-        uint256 endDay; // when lending period ends
+        uint  startDay; // time when he lended
+        uint  endDay; // when lending period ends
         bool isRedeem; // if true is means he has something in pool if false it means he/she redeem
         address pledgeToken;
     }
@@ -71,20 +77,30 @@ contract LendingPool is Ownable {
         uint256 loanAmount;
         string collateralToken;
         uint256 collateralAmount;
-        uint256 borrowDay;
-        uint256 endDay;
+        uint  borrowDay;
+        uint  endDay;
+        uint256 borrowRate;
+        bool isStableBorrow;
         bool hasRepaid;
     }
     mapping(uint256 => borrowMember) public mapBorrowerInfo;
     mapping(address => mapping(string => uint256[])) public borrowerIds;
     mapping(address => mapping(string => uint256)) public borrowerShares;
 
+struct IntrestRateModal {
+  uint256 OPTIMAL_UTILIZATION_RATE;
+  uint256 stableRateSlope1;
+  uint256 stableRateSlope2;
+  uint256 variableRateSlope1;
+  uint256 variableRateSlope2;
+  uint256 baseRate;
+}
     constructor() {}
 
     function lend(
         string memory _tokenSymbol,
         uint256 _amount,
-        uint256 _days,
+        uint  _days,
         address _token,
         address _ftoken
     ) public payable {
@@ -99,7 +115,7 @@ contract LendingPool is Ownable {
         lendingId += 1;
         lenderIds[msg.sender][_tokenSymbol].push(lendingId);
         lenderShares[msg.sender][_tokenSymbol] += _amount;
-
+        totalDeposit[_token]+=_amount;
         mapLenderInfo[lendingId].lenderAddress = msg.sender;
         mapLenderInfo[lendingId].token = _tokenSymbol;
         mapLenderInfo[lendingId].SuppliedAmount = _amount;
@@ -143,6 +159,7 @@ contract LendingPool is Ownable {
         mapLenderInfo[_lendeingId].isRedeem = true;
         mapLenderInfo[_lendeingId].tokenAmount -= _amount;
         lenderShares[msg.sender][_tokenSymbol] -= _amount;
+        totalDeposit[_token]-=_amount;
         ERC20(_token).transfer(msg.sender, _amount);
         ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), _amount);
     }
@@ -153,22 +170,37 @@ contract LendingPool is Ownable {
         address _loanToken,
         string  memory _collateralTokenSymbol,
         address _collateralToken,
-        uint256 _collateralAmount
+        uint256 _collateralAmount,
+        uint256 _stableBorrowRate,
+        bool _isStableBorrow
     ) external payable {
         // require(block.timestamp >= mapLenderInfo[_borrowerId].endDay, "Can not redeem before end day");
         // require(keccak256(abi.encodePacked(mapLenderInfo[_borrowerId].token)) == keccak256(abi.encodePacked(_tokenSymbol)),'Use correct token');
         // IERC20 tokenObj = IERC20(_token);
         borrowerId +=1;
         borrowerIds[msg.sender][_loanTokenSymbol].push(lendingId);
+        if(reserve[_loanToken]>=0){
+
+        }else{
+            reserve[_loanToken]=0;
+        }
+        totalDebt[_loanToken]+=_loanAmount;
+        if(_isStableBorrow){
+            totalStableDebt[_loanToken]+=_loanAmount;
+        }else{
+            totalVariableDebt[_loanToken]+=_loanAmount;
+        }
+        mapBorrowerInfo[borrowerId].isStableBorrow = _isStableBorrow;
         mapBorrowerInfo[borrowerId].borrowerAddress = msg.sender;
         mapBorrowerInfo[borrowerId].loanToken = _loanTokenSymbol;
+        mapBorrowerInfo[borrowerId].borrowRate = _stableBorrowRate;
         mapBorrowerInfo[borrowerId].collateralToken = _collateralTokenSymbol;
         mapBorrowerInfo[borrowerId].borrowAmount += _loanAmount;
         mapBorrowerInfo[borrowerId].loanAmount += _loanAmount;
         mapBorrowerInfo[borrowerId].collateralAmount += _collateralAmount;
         mapBorrowerInfo[borrowerId].borrowDay = block.timestamp;
         mapBorrowerInfo[borrowerId].hasRepaid = false;
-        borrowerShares[msg.sender][_loanTokenSymbol] += _collateralAmount;
+        borrowerShares[msg.sender][_loanTokenSymbol] += _loanAmount;
         ERC20(_collateralToken).transferFrom(msg.sender, address(this), _collateralAmount);
         ERC20(_loanToken).transfer(msg.sender, _loanAmount);
     }
@@ -179,17 +211,30 @@ contract LendingPool is Ownable {
         uint256 _loanAmount,
         address _loanToken,
         address _collateral,
-        uint _borrowerId
+        uint _borrowerId,
+        IntrestRateModal memory IRS
     ) external payable {
         require(mapBorrowerInfo[_borrowerId].borrowerAddress == msg.sender, "Wrong owner");
         if(mapBorrowerInfo[_borrowerId].loanAmount ==_loanAmount){
            mapBorrowerInfo[_borrowerId].hasRepaid = true;
         }
-        mapBorrowerInfo[_borrowerId].loanAmount -= _loanAmount;
-        borrowerShares[msg.sender][_loanTokenSymbol] -= _loanAmount;
         uint256 repayCollateralAmount= mapBorrowerInfo[_borrowerId].collateralAmount;
+       
+
+        if(mapBorrowerInfo[_borrowerId].isStableBorrow){
+            IRS.baseRate=mapBorrowerInfo[_borrowerId].borrowRate;
+        }
+         (uint256 fee, uint256 paid) = calculateBorrowFee(
+           IRS,
+            _loanAmount,
+            _loanToken
+            );
+        require(mapBorrowerInfo[_borrowerId].loanAmount >= paid, "Your custom message here");
+        borrowerShares[msg.sender][_loanTokenSymbol] -= paid;
+        mapBorrowerInfo[_borrowerId].loanAmount -= paid;
+        reserve[_loanToken]+= fee;
         ERC20(_collateral).transfer(msg.sender,repayCollateralAmount);
-        ERC20(_loanToken).transferFrom(msg.sender, address(this), _loanAmount);
+        ERC20(_loanToken).transferFrom(msg.sender, address(this), paid);
     }
 
 
@@ -281,5 +326,131 @@ contract LendingPool is Ownable {
             LoanPrice.latestRoundData();
 
         return uint256(loanPrice);
+    }
+
+     function calculateBorrowFee(
+        IntrestRateModal memory irs,
+        uint256 _amount,
+        address token)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        uint256 uRatio= _utilizationRatio(token);
+         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+         getCurrentStableAndVariableBorrowRate(
+        uRatio,
+        irs);
+        uint256 borrowRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+        uint256 fee = mulExp(_amount, borrowRate);
+        uint256 paid = _amount.sub(fee);
+        return (fee, paid);
+    }
+
+    function _utilizationRatio(address token) public view returns (uint256) {
+        return getExp(totalDebt[token], totalDeposit[token]);
+    }
+
+    function getCurrentStableAndVariableBorrowRate(
+        uint256 utilizationRate,
+        IntrestRateModal memory irs) public view returns (uint256,uint256){
+    console.log(utilizationRate >irs.OPTIMAL_UTILIZATION_RATE);
+    if (utilizationRate >irs.OPTIMAL_UTILIZATION_RATE) {
+      uint256 excessUtilizationRateRatio =
+        utilizationRate.sub(irs.OPTIMAL_UTILIZATION_RATE);
+
+     uint256 currentStableBorrowRate = irs.baseRate.add(irs.stableRateSlope1).add(
+        irs.stableRateSlope2.mul(excessUtilizationRateRatio)
+      );
+
+      uint256 currentVariableBorrowRate = irs.baseRate.add(irs.variableRateSlope1).add(
+        irs.variableRateSlope2.mul(excessUtilizationRateRatio)
+      );
+      return (currentStableBorrowRate,currentVariableBorrowRate);
+    } else {
+      uint256 currentStableBorrowRate = irs.baseRate.add(
+        irs.stableRateSlope1.mul(utilizationRate.div(irs.OPTIMAL_UTILIZATION_RATE))
+      );
+      console.log(currentStableBorrowRate);
+      uint256 currentVariableBorrowRate = irs.baseRate.add(
+        utilizationRate.mul(irs.variableRateSlope1).div(irs.OPTIMAL_UTILIZATION_RATE)
+      );
+      
+      console.log(currentVariableBorrowRate);
+       return (currentStableBorrowRate,currentVariableBorrowRate);
+    }
+
+    }
+
+  function getOverallBorrowRate(
+    address token,
+    uint256 currentVariableBorrowRate,
+    uint256 currentAverageStableBorrowRate
+  ) internal view returns (uint256) {
+    uint256 _totalDebt = totalStableDebt[token].add(totalVariableDebt[token]);
+
+    if (_totalDebt == 0) return 0;
+
+    uint256 weightedVariableRate = totalVariableDebt[token].mul(currentVariableBorrowRate);
+
+    uint256 weightedStableRate = totalStableDebt[token].mul(currentAverageStableBorrowRate);
+
+    uint256 overallBorrowRate =
+      weightedVariableRate.add(weightedStableRate).div(_totalDebt);
+
+    return overallBorrowRate;
+  }
+
+    function _depositRate(
+        address token,
+        uint256 uRatio,
+        uint256 baseRate,
+        uint256 OPTIMAL_UTILIZATION_RATE,
+        uint256 _stableRateSlope1,
+        uint256 _stableRateSlope2,
+        uint256 _variableRateSlope1,
+        uint256 _variableRateSlope2 ) public view returns (uint256) {
+        
+        IntrestRateModal memory IRS;
+        IRS.OPTIMAL_UTILIZATION_RATE=OPTIMAL_UTILIZATION_RATE;
+        IRS.stableRateSlope1=_stableRateSlope1;
+        IRS.stableRateSlope2=_stableRateSlope2;
+        IRS.variableRateSlope1=_variableRateSlope1;
+        IRS.variableRateSlope2=_variableRateSlope2;
+        IRS.baseRate=baseRate;
+        
+        (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+         getCurrentStableAndVariableBorrowRate(
+        uRatio,
+IRS);
+        uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+        return mulExp(uRatio, bRate);
+    }
+
+    function calculateDepositRate(address token,
+     uint256 baseRate,
+        uint256 OPTIMAL_UTILIZATION_RATE,
+        uint256 _stableRateSlope1,
+        uint256 _stableRateSlope2,
+        uint256 _variableRateSlope1,
+        uint256 _variableRateSlope2
+        )
+        public
+        view
+        returns (uint256)
+        {
+             IntrestRateModal memory IRS;
+        IRS.OPTIMAL_UTILIZATION_RATE=OPTIMAL_UTILIZATION_RATE;
+        IRS.stableRateSlope1=_stableRateSlope1;
+        IRS.stableRateSlope2=_stableRateSlope2;
+        IRS.variableRateSlope1=_variableRateSlope1;
+        IRS.variableRateSlope2=_variableRateSlope2;
+        IRS.baseRate=baseRate;
+        uint256 uRatio= _utilizationRatio(token);
+           (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+         getCurrentStableAndVariableBorrowRate(
+        uRatio, IRS);
+         uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+        return mulExp(uRatio, bRate); 
     }
 }

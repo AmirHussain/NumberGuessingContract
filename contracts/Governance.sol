@@ -12,6 +12,8 @@ import './Math.sol';
 import 'hardhat/console.sol';
 
 contract Governance is Ownable {
+    
+    using SafeMath for uint256;
     address[] TokenAddresses;
 
     struct Token {
@@ -37,6 +39,7 @@ contract Governance is Ownable {
         uint LiquidationThreshold;
         uint LiquidationPenalty;
         uint ProtocolShare;
+        uint InitialBorrowRate;
     }
 
     struct TokenAdaptiveLimitations {

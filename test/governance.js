@@ -17,7 +17,7 @@ describe('Governance contract test cases', function () {
     it('1. add governance', async function () {
         await governance.AddOrUpdateToken('0x21c639bBC0ce1be64a442dc495867a4F1D2122d0', 'WETH', 'Wrapped Ether',
             '', 'abi', '0x21c639bBC0ce1be64a442dc495867a4F1D2122d0', false, false, true);
-        const tokenAddresses = await governance.getAllTokenAddresses(lending.getAllTokenAddresses)
+        const tokenAddresses = await governance.getAllTokenAddresses()
         const token = await governance.getToken(tokenAddresses[0])
         expect(tokenAddresses.length > 0).to.equal(true)
         expect(token.isDeleted).to.equal(false)
