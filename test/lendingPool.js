@@ -163,45 +163,45 @@ describe('Lending contract test cases', function () {
     console.log('_borrowRate',_borrowRate);
   });
 
-  // it('10 calculate borrow fee', async function () {
-  //   const borrow=await lending.calculateBorrowFee(
-  //     {OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate},
-  //     decimalToBig("30"), 
-  //     weth.address
-  //     );
-  //     console.log('calculateBorrowFee',borrow)
+  it('10 calculate borrow fee', async function () {
+    const borrow=await lending.calculateBorrowFee(
+      {OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate},
+      decimalToBig("30"), 
+      weth.address
+      );
+      console.log('calculateBorrowFee',borrow)
    
-  // });
+  });
 
-  // it('11 repay test', async function () {
-  //   const ethSymbol = await weth.symbol();
-  //   let id  = await lending.getBorrowerId(ethSymbol);
+  it('11 repay test', async function () {
+    const ethSymbol = await weth.symbol();
+    let id  = await lending.getBorrowerId(ethSymbol);
   
-  //   let detail = await lending.getBorrowerDetails(id[0]);
-  //   await weth.approve(lending.address, detail["loanAmount"]);
+    let detail = await lending.getBorrowerDetails(id[0]);
+    await weth.approve(lending.address, detail["loanAmount"]);
     
-  //   console.log('repay details',detail)
-  //   console.log('owner eth balance before repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('repay details',detail)
+    console.log('owner eth balance before repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
     
-  //   await lending.repay(
-  //     detail['loanToken'],
-  //      detail['loanAmount'],
-  //       weth.address, 
-  //     dai.address, id[0],
-  //     {baseRate,
-  //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2});
-  //   console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
-  //   console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
-  // }); 
+    await lending.repay(
+      detail['loanToken'],
+       detail['loanAmount'],
+        weth.address, 
+      dai.address, id[0],
+      {baseRate,
+      OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2});
+    console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
+  }); 
 
   //   async function deployOneYearLockFixture() {
   //     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;

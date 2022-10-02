@@ -386,7 +386,7 @@ struct IntrestRateModal {
     address token,
     uint256 currentVariableBorrowRate,
     uint256 currentAverageStableBorrowRate
-  ) internal view returns (uint256) {
+  ) public view returns (uint256) {
     uint256 _totalDebt = totalStableDebt[token].add(totalVariableDebt[token]);
 
     if (_totalDebt == 0) return 0;
