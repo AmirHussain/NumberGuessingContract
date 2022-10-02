@@ -40,6 +40,13 @@ contract Governance is Ownable {
         uint LiquidationPenalty;
         uint ProtocolShare;
         uint InitialBorrowRate;
+        uint256 OPTIMAL_UTILIZATION_RATE;
+        uint256 StableRateSlope1;
+        uint256 StableRateSlope2;
+        uint256 VariableRateSlope1;
+        uint256 VariableRateSlope2;
+        uint256 BaseRate;
+        bool AllowStableJob;
     }
 
     struct TokenAdaptiveLimitations {

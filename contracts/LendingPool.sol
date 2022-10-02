@@ -37,7 +37,7 @@ contract LendingPool is Ownable, Math {
     // AggregatorV3Interface internal constant priceFeed = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
     ISwapRouter public constant uniswapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
     
-    mapping(address => uint256) public totalDeposit;
+    mapping(address => uint256) public totalLendings;
     mapping(address => uint256) public reserve;
     mapping(address => uint256) public totalDebt;
     mapping(address => uint256) public totalVariableDebt;
@@ -115,7 +115,7 @@ struct IntrestRateModal {
         lendingId += 1;
         lenderIds[msg.sender][_tokenSymbol].push(lendingId);
         lenderShares[msg.sender][_tokenSymbol] += _amount;
-        totalDeposit[_token]+=_amount;
+        totalLendings[_token]+=_amount;
         mapLenderInfo[lendingId].lenderAddress = msg.sender;
         mapLenderInfo[lendingId].token = _tokenSymbol;
         mapLenderInfo[lendingId].SuppliedAmount = _amount;
@@ -152,15 +152,20 @@ struct IntrestRateModal {
         string memory _tokenSymbol,
         uint256 _amount,
         address _token,
-        uint256 _lendeingId
+        uint256 _lendeingId,
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare
     ) external payable {
         // require(block.timestamp >= mapLenderInfo[_lendeingId].endDay, "Can not redeem before end day");
         require(keccak256(abi.encodePacked(mapLenderInfo[_lendeingId].token)) == keccak256(abi.encodePacked(_tokenSymbol)), 'Use correct token');
         mapLenderInfo[_lendeingId].isRedeem = true;
         mapLenderInfo[_lendeingId].tokenAmount -= _amount;
         lenderShares[msg.sender][_tokenSymbol] -= _amount;
-        totalDeposit[_token]-=_amount;
-        ERC20(_token).transfer(msg.sender, _amount);
+        totalLendings[_token]-=_amount;
+        uint256 profit= getLendingProfitAmount(_amount,_token,IRS,ProtocolShare);
+        console.log('profit',profit);
+        reserve[_token]-= profit;
+        ERC20(_token).transfer(msg.sender, _amount.add(profit));
         ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), _amount);
     }
 
@@ -219,12 +224,10 @@ struct IntrestRateModal {
            mapBorrowerInfo[_borrowerId].hasRepaid = true;
         }
         uint256 repayCollateralAmount= mapBorrowerInfo[_borrowerId].collateralAmount;
-       
-
         if(mapBorrowerInfo[_borrowerId].isStableBorrow){
             IRS.baseRate=mapBorrowerInfo[_borrowerId].borrowRate;
         }
-         (uint256 fee, uint256 paid) = calculateBorrowFee(
+        (uint256 fee, uint256 paid) = calculateBorrowFee(
            IRS,
             _loanAmount,
             _loanToken
@@ -313,13 +316,11 @@ struct IntrestRateModal {
 
     function getAggregatorPrice(address _tokenAddress) public view returns (uint256) {
         AggregatorV3Interface LoanPrice = AggregatorV3Interface(_tokenAddress);
-        (
-            ,
+        (   ,
             /*uint80 roundID*/
             int256 loanPrice,
             ,
             ,
-
         ) = /*uint startedAt*/
             /*uint timeStamp*/
             /*uint80 answeredInRound*/
@@ -348,21 +349,18 @@ struct IntrestRateModal {
     }
 
     function _utilizationRatio(address token) public view returns (uint256) {
-        return getExp(totalDebt[token], totalDeposit[token]);
+        return getExp(totalDebt[token], totalLendings[token]);
     }
 
     function getCurrentStableAndVariableBorrowRate(
         uint256 utilizationRate,
-        IntrestRateModal memory irs) public view returns (uint256,uint256){
-    console.log(utilizationRate >irs.OPTIMAL_UTILIZATION_RATE);
+        IntrestRateModal memory irs) public pure returns (uint256,uint256){
     if (utilizationRate >irs.OPTIMAL_UTILIZATION_RATE) {
       uint256 excessUtilizationRateRatio =
         utilizationRate.sub(irs.OPTIMAL_UTILIZATION_RATE);
-
      uint256 currentStableBorrowRate = irs.baseRate.add(irs.stableRateSlope1).add(
         irs.stableRateSlope2.mul(excessUtilizationRateRatio)
       );
-
       uint256 currentVariableBorrowRate = irs.baseRate.add(irs.variableRateSlope1).add(
         irs.variableRateSlope2.mul(excessUtilizationRateRatio)
       );
@@ -371,13 +369,10 @@ struct IntrestRateModal {
       uint256 currentStableBorrowRate = irs.baseRate.add(
         irs.stableRateSlope1.mul(utilizationRate.div(irs.OPTIMAL_UTILIZATION_RATE))
       );
-      console.log(currentStableBorrowRate);
       uint256 currentVariableBorrowRate = irs.baseRate.add(
         utilizationRate.mul(irs.variableRateSlope1).div(irs.OPTIMAL_UTILIZATION_RATE)
       );
-      
-      console.log(currentVariableBorrowRate);
-       return (currentStableBorrowRate,currentVariableBorrowRate);
+      return (currentStableBorrowRate,currentVariableBorrowRate);
     }
 
     }
@@ -388,69 +383,59 @@ struct IntrestRateModal {
     uint256 currentAverageStableBorrowRate
   ) public view returns (uint256) {
     uint256 _totalDebt = totalStableDebt[token].add(totalVariableDebt[token]);
-
     if (_totalDebt == 0) return 0;
-
     uint256 weightedVariableRate = totalVariableDebt[token].mul(currentVariableBorrowRate);
-
     uint256 weightedStableRate = totalStableDebt[token].mul(currentAverageStableBorrowRate);
-
     uint256 overallBorrowRate =
       weightedVariableRate.add(weightedStableRate).div(_totalDebt);
-
     return overallBorrowRate;
   }
 
-    function _depositRate(
+    function lendingProfiteRate(
         address token,
         uint256 uRatio,
-        uint256 baseRate,
-        uint256 OPTIMAL_UTILIZATION_RATE,
-        uint256 _stableRateSlope1,
-        uint256 _stableRateSlope2,
-        uint256 _variableRateSlope1,
-        uint256 _variableRateSlope2 ) public view returns (uint256) {
-        
-        IntrestRateModal memory IRS;
-        IRS.OPTIMAL_UTILIZATION_RATE=OPTIMAL_UTILIZATION_RATE;
-        IRS.stableRateSlope1=_stableRateSlope1;
-        IRS.stableRateSlope2=_stableRateSlope2;
-        IRS.variableRateSlope1=_variableRateSlope1;
-        IRS.variableRateSlope2=_variableRateSlope2;
-        IRS.baseRate=baseRate;
-        
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare ) public view returns (uint256) {    
         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
          getCurrentStableAndVariableBorrowRate(
-        uRatio,
-IRS);
+        uRatio,IRS);
+        console.log(currentStableBorrowRate,currentVariableBorrowRate);
         uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
-        return mulExp(uRatio, bRate);
+        console.log('bRate',bRate);
+         console.log('ProtocolShare',ProtocolShare);
+        uint256 companyshare= bRate.mul(ProtocolShare).div(1*10**18);
+        console.log('companyshare',companyshare);
+        console.log('supplyRate',bRate.sub(companyshare));
+        return mulExp(uRatio, bRate.sub(companyshare));
     }
 
-    function calculateDepositRate(address token,
-     uint256 baseRate,
-        uint256 OPTIMAL_UTILIZATION_RATE,
-        uint256 _stableRateSlope1,
-        uint256 _stableRateSlope2,
-        uint256 _variableRateSlope1,
-        uint256 _variableRateSlope2
+    function calculateCurrentLendingProfitRate(
+        address token,
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare
         )
         public
         view
         returns (uint256)
         {
-             IntrestRateModal memory IRS;
-        IRS.OPTIMAL_UTILIZATION_RATE=OPTIMAL_UTILIZATION_RATE;
-        IRS.stableRateSlope1=_stableRateSlope1;
-        IRS.stableRateSlope2=_stableRateSlope2;
-        IRS.variableRateSlope1=_variableRateSlope1;
-        IRS.variableRateSlope2=_variableRateSlope2;
-        IRS.baseRate=baseRate;
         uint256 uRatio= _utilizationRatio(token);
-           (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
-         getCurrentStableAndVariableBorrowRate(
-        uRatio, IRS);
-         uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+           
+         uint256 bRate = lendingProfiteRate(
+            token,
+            uRatio,
+            IRS,
+            ProtocolShare);
         return mulExp(uRatio, bRate); 
+    }
+
+    function getLendingProfitAmount(
+        uint256 _amount,
+         address token,
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare
+    ) internal view returns (uint256){
+        uint256 lendingProfitRate = calculateCurrentLendingProfitRate(token,IRS,ProtocolShare);
+        uint256 profit = mulExp(_amount, lendingProfitRate);
+        return (profit);
     }
 }

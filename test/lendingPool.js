@@ -12,7 +12,8 @@ describe('Lending contract test cases', function () {
   let stableRateSlope2=decimalToBig('0.01')
   let variableRateSlope1=decimalToBig('0.01')
   let variableRateSlope2=decimalToBig('0.01')
-  let baseRate=decimalToBig('4')
+  let baseRate=decimalToBig('0.04')
+  let ProtocolShare=decimalToBig('0.3')
   it('beforeAll', async function () {
     if (network.name != 'hardhat') {
       console.log('PLEASE USE --network hardhat');
@@ -82,11 +83,32 @@ describe('Lending contract test cases', function () {
     console.log(bigToDecimal(lenderShare));
   });
 
+  it('6 borrow test', async function () {
+    const symbol = await weth.symbol();
+    console.log('owner eth balance before borrow =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(owner.address)));
+    let colletaralAmount = await lending.getColateralAmount3(decimalToBig('10'));
+    console.log("colletaralAmount =>",bigToDecimal(colletaralAmount) )
+    await dai.approve(lending.address,colletaralAmount)
+    await lending.borrow(
+      symbol,decimalToBig("10"), weth.address,
+      dai.symbol(), dai.address,colletaralAmount,decimalToBig("0.04"),false
+      );
+    console.log('owner  balance before borrow =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance before borrow =>', bigToDecimal(await dai.balanceOf(owner.address)));
+
+  });
 
   it('4. redeem test', async function () {
     const symbol = await weth.symbol();
     await fWeth.approve(lending.address,decimalToBig('20'))
-    await lending.redeem(symbol, decimalToBig('20'), weth.address,1);
+    await lending.redeem(symbol, decimalToBig('20'), weth.address,1 ,{OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate},
+      ProtocolShare);
 
     let lenderIds = await lending.getLenderId(symbol);
     let lendedAssetDetails = await lending.getLenderAsset(1);
@@ -202,6 +224,34 @@ describe('Lending contract test cases', function () {
     console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
     console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
   }); 
+  it('12 lendingProfiteRate', async function () {
+    const uratio=await lending._utilizationRatio( weth.address);
+    const IntrestRateModal= {OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate}
+    const result =
+    await lending.lendingProfiteRate(weth.address, uratio, IntrestRateModal, ProtocolShare);
+    console.log('lendingProfiteRate',result);
+  });
+
+  it('13 calculateCurrentLendingProfitRate ', async function () {
+    const supplyRate=await lending.calculateCurrentLendingProfitRate(
+      
+      weth.address,
+       {OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate},
+      ProtocolShare,
+      );
+      console.log('calculateCurrentLendingProfitRate',supplyRate)
+   
+  });
 
   //   async function deployOneYearLockFixture() {
   //     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
