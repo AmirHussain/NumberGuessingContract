@@ -297,6 +297,7 @@ struct IntrestRateModal {
         uint256 colletaralAmount = uint256(percentage).div(colletaralPrice);
         return colletaralAmount;
     }
+    
     function getColateralAmount3(
         // address loanTokenAggregator,
         // address collateralTokenAggregator,
@@ -307,10 +308,9 @@ struct IntrestRateModal {
         uint256 price = 100000000; //dai
         uint256 loanPrice = 100046579615; //price per eth
         
-
-        uint256 loanPriceInUSD=loanAmount.mul(uint256(loanPrice));
+        uint256 loanPriceInUSD=loanAmount.mul(loanPrice);
         uint256 collateralAmountInUSD = loanPriceInUSD.mul(100*10**18).div(borrowPercentage);
-        uint256 collateralAmount = uint256(collateralAmountInUSD).div(uint(price));
+        uint256 collateralAmount = collateralAmountInUSD.div(price);
         return collateralAmount;
     }
 
