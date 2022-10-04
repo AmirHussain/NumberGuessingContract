@@ -241,21 +241,21 @@ describe('Lending contract test cases', function () {
    
   });
   
-  it('15 getBorrowRateSlope ', async function () {
-    const getBorrowRateSlope=await lending.getBorrowRateSlope(
+  // it('15 getBorrowRateSlope ', async function () {
+  //   const getBorrowRateSlope=await lending.getBorrowRateSlope(
       
-       {OPTIMAL_UTILIZATION_RATE,
-      stableRateSlope1,
-      stableRateSlope2,
-      variableRateSlope1,
-      variableRateSlope2,
-      baseRate},
-      weth.address,
+  //      {OPTIMAL_UTILIZATION_RATE,
+  //     stableRateSlope1,
+  //     stableRateSlope2,
+  //     variableRateSlope1,
+  //     variableRateSlope2,
+  //     baseRate},
+  //     weth.address,
 
-      );
-      console.log('getBorrowRateSlope',getBorrowRateSlope)
+  //     );
+  //     console.log('getBorrowRateSlope',getBorrowRateSlope)
    
-  });
+  // });
   it('16 lendingProfiteRateSlope ', async function () {
     const supplyRate=await lending.lendingProfiteRateSlope(
       

@@ -347,21 +347,21 @@ struct IntrestRateModal {
         return (fee, paid);
     }
 
-  function getBorrowRateSlope(
-        IntrestRateModal memory irs,
-        address token)
-        public view returns (uint256[] memory) {    
-      uint256[] memory borrowSlope;
-      for(uint256 i=0;i<100;i++){
-         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
-         getCurrentStableAndVariableBorrowRate(
-         i.mul(1*10**16),
-        irs);
-        uint256 borrowRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
-       borrowSlope[i]=borrowRate;
-    }
-     return borrowSlope;
-        }
+//   function getBorrowRateSlope(
+//         IntrestRateModal memory irs,
+//         address token)
+//         public view returns (uint256[] memory) {    
+//       uint256[] memory borrowSlope;
+//       for(uint256 i=0;i<100;i++){
+//          (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+//          getCurrentStableAndVariableBorrowRate(
+//          i.mul(1*10**16),
+//         irs);
+//         uint256 borrowRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+//        borrowSlope[i]=borrowRate;
+//     }
+//      return borrowSlope;
+//         }
 
     function _utilizationRatio(address token) public view returns (uint256) {
         return getExp(totalDebt[token], totalLendings[token]);
@@ -419,21 +419,21 @@ struct IntrestRateModal {
         return mulExp(uRatio, bRate.sub(companyshare));
     }
 
-    function lendingProfiteRateSlope(
-        address token,
-        IntrestRateModal memory IRS,
-        uint256 ProtocolShare ) public view returns (uint256[] memory) {    
-      uint256[] memory profitSlope;
-      for(uint256 i=0;i<100;i++){
-        (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
-         getCurrentStableAndVariableBorrowRate(
-        i.mul(1*10**16),IRS);
-        uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
-        uint256 companyshare= bRate.mul(ProtocolShare).div(1*10**18);
-        profitSlope[i]=mulExp(i.mul(1*10**16), bRate.sub(companyshare));
-      }
-        return profitSlope;
-    }
+    // function lendingProfiteRateSlope(
+    //     address token,
+    //     IntrestRateModal memory IRS,
+    //     uint256 ProtocolShare ) public view returns (uint256[] memory) {    
+    //   uint256[] memory profitSlope;
+    //   for(uint256 i=0;i<100;i++){
+    //     (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+    //      getCurrentStableAndVariableBorrowRate(
+    //     i,IRS);
+    //     uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+    //     uint256 companyshare= bRate.mul(ProtocolShare).div(1*10**18);
+    //     profitSlope[i]=mulExp(i, bRate.sub(companyshare));
+    //   }
+    //     return profitSlope;
+    // }
     
 
     function calculateCurrentLendingProfitRate(
