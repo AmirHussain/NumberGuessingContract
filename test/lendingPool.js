@@ -240,6 +240,40 @@ describe('Lending contract test cases', function () {
       console.log('calculateCurrentLendingProfitRate',supplyRate)
    
   });
+  
+  it('15 getBorrowRateSlope ', async function () {
+    const getBorrowRateSlope=await lending.getBorrowRateSlope(
+      
+       {OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate},
+      weth.address,
+
+      );
+      console.log('getBorrowRateSlope',getBorrowRateSlope)
+   
+  });
+  it('16 lendingProfiteRateSlope ', async function () {
+    const supplyRate=await lending.lendingProfiteRateSlope(
+      
+      weth.address,
+       {OPTIMAL_UTILIZATION_RATE,
+      stableRateSlope1,
+      stableRateSlope2,
+      variableRateSlope1,
+      variableRateSlope2,
+      baseRate},
+      ProtocolShare,
+      );
+      console.log('lendingProfiteRateSlope',supplyRate)
+   
+  });
+  
+
+  
 
   //   async function deployOneYearLockFixture() {
   //     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;

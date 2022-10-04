@@ -163,7 +163,6 @@ struct IntrestRateModal {
         lenderShares[msg.sender][_tokenSymbol] -= _amount;
         totalLendings[_token]-=_amount;
         uint256 profit= getLendingProfitAmount(_amount,_token,IRS,ProtocolShare);
-        console.log('profit',profit);
         reserve[_token]-= profit;
         ERC20(_token).transfer(msg.sender, _amount.add(profit));
         ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), _amount);
@@ -348,6 +347,22 @@ struct IntrestRateModal {
         return (fee, paid);
     }
 
+  function getBorrowRateSlope(
+        IntrestRateModal memory irs,
+        address token)
+        public view returns (uint256[] memory) {    
+      uint256[] memory borrowSlope;
+      for(uint256 i=0;i<100;i++){
+         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+         getCurrentStableAndVariableBorrowRate(
+         i.mul(1*10**16),
+        irs);
+        uint256 borrowRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+       borrowSlope[i]=borrowRate;
+    }
+     return borrowSlope;
+        }
+
     function _utilizationRatio(address token) public view returns (uint256) {
         return getExp(totalDebt[token], totalLendings[token]);
     }
@@ -399,15 +414,27 @@ struct IntrestRateModal {
         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
          getCurrentStableAndVariableBorrowRate(
         uRatio,IRS);
-        console.log(currentStableBorrowRate,currentVariableBorrowRate);
         uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
-        console.log('bRate',bRate);
-         console.log('ProtocolShare',ProtocolShare);
         uint256 companyshare= bRate.mul(ProtocolShare).div(1*10**18);
-        console.log('companyshare',companyshare);
-        console.log('supplyRate',bRate.sub(companyshare));
         return mulExp(uRatio, bRate.sub(companyshare));
     }
+
+    function lendingProfiteRateSlope(
+        address token,
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare ) public view returns (uint256[] memory) {    
+      uint256[] memory profitSlope;
+      for(uint256 i=0;i<100;i++){
+        (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
+         getCurrentStableAndVariableBorrowRate(
+        i.mul(1*10**16),IRS);
+        uint256 bRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
+        uint256 companyshare= bRate.mul(ProtocolShare).div(1*10**18);
+        profitSlope[i]=mulExp(i.mul(1*10**16), bRate.sub(companyshare));
+      }
+        return profitSlope;
+    }
+    
 
     function calculateCurrentLendingProfitRate(
         address token,
