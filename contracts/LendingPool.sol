@@ -337,10 +337,7 @@ struct IntrestRateModal {
         returns (uint256, uint256)
     {
         uint256 uRatio= _utilizationRatio(token);
-         (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) =
-         getCurrentStableAndVariableBorrowRate(
-        uRatio,
-        irs);
+        (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) = getCurrentStableAndVariableBorrowRate(uRatio,irs);
         uint256 borrowRate = getOverallBorrowRate(token,currentStableBorrowRate,currentVariableBorrowRate);
         uint256 fee = mulExp(_amount, borrowRate);
         uint256 paid = _amount.sub(fee);
