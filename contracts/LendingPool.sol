@@ -462,4 +462,27 @@ struct IntrestRateModal {
         uint256 profit = mulExp(_amount, lendingProfitRate);
         return (profit);
     }
+
+    function getChartData (
+        address tokenAddress,
+        IntrestRateModal memory IRS,
+        uint256 ProtocolShare
+        )
+        external view returns(uint[] memory,uint[] memory) {
+
+     uint256 end = 100;
+      uint[] memory arr = new uint[](end);
+      uint[] memory borrowArray = new uint[](end);
+      uint[] memory supplyArry = new uint[](end);
+     for (uint index=0; index < arr.length; index++) {
+           arr[index] = index;
+           uint uratio = (index / 100);
+           uint256 supplyRate  = lendingProfiteRate(tokenAddress,uratio, IRS,ProtocolShare);
+           (uint256 currentStableBorrowRate,uint256 currentVariableBorrowRate) = getCurrentStableAndVariableBorrowRate(uratio,IRS);
+           uint256 borrowRate = getOverallBorrowRate(tokenAddress,currentStableBorrowRate,currentVariableBorrowRate);
+           supplyArry[index] = supplyRate;
+           borrowArray[index] = borrowRate;
+         }
+    return (supplyArry,borrowArray);
+    }
 }

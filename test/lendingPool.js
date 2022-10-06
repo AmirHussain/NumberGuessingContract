@@ -268,9 +268,25 @@ describe('Lending contract test cases', function () {
   //     console.log('getBorrowRateSlope',getBorrowRateSlope)
 
   // });
-  it('16 lendingProfiteRateSlope ', async function () {
-    const supplyRate = await lending.lendingProfiteRateSlope(
+  // it('16 lendingProfiteRateSlope ', async function () {
+  //   const supplyRate = await lending.lendingProfiteRateSlope(
 
+  //     weth.address,
+  //     {
+  //       OPTIMAL_UTILIZATION_RATE,
+  //       stableRateSlope1,
+  //       stableRateSlope2,
+  //       variableRateSlope1,
+  //       variableRateSlope2,
+  //       baseRate
+  //     },
+  //     ProtocolShare,
+  //   );
+  //   console.log('lendingProfiteRateSlope', bigToDecimal(supplyRate) )
+
+  // });
+  it('17 getChartData ', async function () {
+    const data = await lending.getChartData(
       weth.address,
       {
         OPTIMAL_UTILIZATION_RATE,
@@ -282,7 +298,8 @@ describe('Lending contract test cases', function () {
       },
       ProtocolShare,
     );
-    console.log('lendingProfiteRateSlope', bigToDecimal(supplyRate) )
+
+    console.log("getChartData",data)
 
   });
 
