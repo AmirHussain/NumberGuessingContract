@@ -325,7 +325,7 @@ describe('Lending contract test cases', function () {
   // //     detail['loanToken'],
   // //     detail['loanAmount'],
   // //     weth.address,
-  // //     dai.address, id[0],
+  // //     dai.address, id[0],   
   // //     {
   // //       baseRate,
   // //       OPTIMAL_UTILIZATION_RATE,

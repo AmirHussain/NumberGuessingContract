@@ -12,7 +12,6 @@ import './Math.sol';
 import 'hardhat/console.sol';
 
 contract Governance is Ownable {
-    
     using SafeMath for uint256;
     address[] TokenAddresses;
 
@@ -29,24 +28,28 @@ contract Governance is Ownable {
 
     struct TokenAggregators {
         address aggregatorAddress;
-        int decimals;
+        int256 decimals;
         address targetToken;
         bool isApplicable;
     }
 
     struct TokenBorrowLimitations {
-        uint CollateralFator;
-        uint LiquidationThreshold;
-        uint LiquidationPenalty;
-        uint ProtocolShare;
-        uint InitialBorrowRate;
+        uint256 CollateralFator;
+        uint256 LiquidationThreshold;
+        uint256 LiquidationPenalty;
+        uint256 ProtocolShare;
+        uint256 InitialBorrowRate;
+        uint256 MAX_UTILIZATION_RATE;
+        bool AllowStableJob;
+    }
+
+    struct TokenIntrestRateModel {
         uint256 OPTIMAL_UTILIZATION_RATE;
         uint256 StableRateSlope1;
         uint256 StableRateSlope2;
         uint256 VariableRateSlope1;
         uint256 VariableRateSlope2;
         uint256 BaseRate;
-        bool AllowStableJob;
     }
 
     struct TokenAdaptiveLimitations {
@@ -60,29 +63,57 @@ contract Governance is Ownable {
     mapping(address => Token) public tokens;
     mapping(address => TokenAggregators[]) public aggregators;
     mapping(address => TokenBorrowLimitations) public borrowLimitations;
+    mapping(address => TokenIntrestRateModel) public intrestRateModel;
     mapping(address => TokenAdaptiveLimitations[]) public adaptiveLimitations;
-    uint public TotalTokens = 0;
+    uint256 public TotalTokens = 0;
 
     constructor() {}
 
- function AddOrUpdateTokenBorrowLimiations(
+    function AddOrUpdateTokenIntrestRateModal(
         address _tokenAddress,
-         uint CollateralFator,
-        uint LiquidationThreshold,
-        uint LiquidationPenalty,
-        uint ProtocolShare
-    ) public returns (bool){
-        borrowLimitations[_tokenAddress].CollateralFator = CollateralFator;
-        borrowLimitations[_tokenAddress].LiquidationThreshold = LiquidationThreshold;
-        borrowLimitations[_tokenAddress].LiquidationPenalty = LiquidationPenalty;
-        borrowLimitations[_tokenAddress].ProtocolShare = ProtocolShare;
+        uint256 OPTIMAL_UTILIZATION_RATE,
+        uint256 StableRateSlope1,
+        uint256 StableRateSlope2,
+        uint256 VariableRateSlope1,
+        uint256 VariableRateSlope2,
+        uint256 BaseRate
+    ) public returns (bool) {
+        TokenIntrestRateModel memory irm;
+        irm.OPTIMAL_UTILIZATION_RATE = OPTIMAL_UTILIZATION_RATE;
+        irm.StableRateSlope1 = StableRateSlope1;
+        irm.StableRateSlope2 = StableRateSlope2;
+        irm.VariableRateSlope1 = VariableRateSlope1;
+        irm.VariableRateSlope2 = VariableRateSlope2;
+        irm.BaseRate = BaseRate;
+        intrestRateModel[_tokenAddress]=irm;
+        return true;
+    }
+    function AddOrUpdateTokenBorrowLimiations(
+        address _tokenAddress,
+        uint256 CollateralFator,
+        uint256 LiquidationThreshold,
+        uint256 LiquidationPenalty,
+        uint256 ProtocolShare,
+        uint256 InitialBorrowRate,
+        uint256 MAX_UTILIZATION_RATE,
+        bool AllowStableJob
+    ) public returns (bool) {
+        TokenBorrowLimitations memory bL;
+        bL.CollateralFator = CollateralFator;
+        bL.LiquidationThreshold = LiquidationThreshold;
+        bL.LiquidationPenalty = LiquidationPenalty;
+        bL.ProtocolShare = ProtocolShare;
+        bL.InitialBorrowRate = InitialBorrowRate;
+        bL.MAX_UTILIZATION_RATE = MAX_UTILIZATION_RATE;
+        bL.AllowStableJob = AllowStableJob;
+        borrowLimitations[_tokenAddress]=bL;
         return true;
     }
 
     function AddAggregators(
         address _tokenAddress,
         address _aggregatorAddress,
-        int _decimals,
+        int256 _decimals,
         address _targetToken,
         bool _isApplicable
     ) public returns (bool) {
@@ -99,10 +130,10 @@ contract Governance is Ownable {
         address _tokenAddress,
         address _aggregatorAddress,
         bool _isApplicable
-    ) public returns (bool){
-        for (uint i = 0; i < aggregators[_tokenAddress].length; i++) {
-            if( aggregators[_tokenAddress][i].aggregatorAddress==_aggregatorAddress){
-               aggregators[_tokenAddress][i].isApplicable=_isApplicable;
+    ) public returns (bool) {
+        for (uint256 i = 0; i < aggregators[_tokenAddress].length; i++) {
+            if (aggregators[_tokenAddress][i].aggregatorAddress == _aggregatorAddress) {
+                aggregators[_tokenAddress][i].isApplicable = _isApplicable;
             }
         }
 
@@ -119,7 +150,7 @@ contract Governance is Ownable {
         bool _isPedgeToken,
         bool _isDeleted,
         bool _new
-    ) public returns (bool){
+    ) public returns (bool) {
         if (_new) {
             TotalTokens += 1;
             TokenAddresses.push(_tokenAddress);
@@ -134,7 +165,7 @@ contract Governance is Ownable {
         return true;
     }
 
-    function deleteToken(address tokenAddress, bool _isDeleted) public returns (bool){
+    function deleteToken(address tokenAddress, bool _isDeleted) public returns (bool) {
         TotalTokens -= 1;
         tokens[tokenAddress].isDeleted = _isDeleted;
         return true;
@@ -142,7 +173,7 @@ contract Governance is Ownable {
 
     function getAllToken() public view returns (Token[] memory) {
         Token[] memory memoryArray = new Token[](TotalTokens);
-        for (uint i = 0; i < TotalTokens; i++) {
+        for (uint256 i = 0; i < TotalTokens; i++) {
             memoryArray[i] = tokens[TokenAddresses[i]];
         }
         return memoryArray;
@@ -155,8 +186,11 @@ contract Governance is Ownable {
     function getToken(address _tokenAddress) public view returns (Token memory) {
         return tokens[_tokenAddress];
     }
-    
+
     function getTokenBorrowLimiatations(address _tokenAddress) public view returns (TokenBorrowLimitations memory) {
         return borrowLimitations[_tokenAddress];
+    }
+    function getTokenIntrestRateModel(address _tokenAddress) public view returns (TokenIntrestRateModel memory) {
+        return intrestRateModel[_tokenAddress];
     }
 }
