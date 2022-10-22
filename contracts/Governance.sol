@@ -28,12 +28,14 @@ contract Governance is Ownable {
 
     struct TokenAggregators {
         address aggregatorAddress;
-        int256 decimals;
+        address tokenAddress;
+        uint256 decimals;
         address targetToken;
         bool isApplicable;
     }
 
     struct TokenBorrowLimitations {
+        address tokenAddress;
         uint256 CollateralFator;
         uint256 LiquidationThreshold;
         uint256 LiquidationPenalty;
@@ -58,10 +60,11 @@ contract Governance is Ownable {
         string Borrow;
         bool Replinish;
         bool Redeem;
+        bool IsApplicable;
     }
 
     mapping(address => Token) public tokens;
-    mapping(address => TokenAggregators[]) public aggregators;
+    mapping(address => TokenAggregators) public aggregators;
     mapping(address => TokenBorrowLimitations) public borrowLimitations;
     mapping(address => TokenIntrestRateModel) public intrestRateModel;
     mapping(address => TokenAdaptiveLimitations[]) public adaptiveLimitations;
@@ -69,7 +72,54 @@ contract Governance is Ownable {
 
     constructor() {}
 
-    function AddOrUpdateTokenIntrestRateModal(
+    function AddTokenAdaptiveLimitations(
+        address _tokenAddress,
+        string memory Utilization,
+        string memory Withdraw,
+        string memory Borrow,
+        bool Replinish,
+        bool Redeem
+    ) public returns (bool) {
+        TokenAdaptiveLimitations memory TAL;
+        TAL.Utilization = Utilization;
+        TAL.Withdraw = Withdraw;
+        TAL.Borrow = Borrow;
+        TAL.Replinish = Replinish;
+        TAL.Redeem = Redeem;
+        TAL.IsApplicable = true;
+        adaptiveLimitations[_tokenAddress].push(TAL);
+        return true;
+    }
+
+    function UpdateTokenAdaptiveLimitations(
+        address _tokenAddress,
+        uint256 _rowIndex,
+        string memory Utilization,
+        string memory Withdraw,
+        string memory Borrow,
+        bool Replinish,
+        bool Redeem
+    ) public returns (bool) {
+        TokenAdaptiveLimitations memory TAL;
+        TAL.Utilization = Utilization;
+        TAL.Withdraw = Withdraw;
+        TAL.Borrow = Borrow;
+        TAL.Replinish = Replinish;
+        TAL.Redeem = Redeem;
+        adaptiveLimitations[_tokenAddress][_rowIndex] = TAL;
+        return true;
+    }
+
+    function RemoveTokenAdaptiveLimitations(address _tokenAddress, uint256 _rowIndex) public returns (bool) {
+        adaptiveLimitations[_tokenAddress][_rowIndex].IsApplicable = false;
+        return true;
+    }
+
+    function getTokenAdaptiveLimitations(address _tokenAddress) public view returns (TokenAdaptiveLimitations[] memory) {
+        return adaptiveLimitations[_tokenAddress];
+    }
+
+    function AddOrUpdateTokenIntrestRateModel(
         address _tokenAddress,
         uint256 OPTIMAL_UTILIZATION_RATE,
         uint256 StableRateSlope1,
@@ -85,9 +135,10 @@ contract Governance is Ownable {
         irm.VariableRateSlope1 = VariableRateSlope1;
         irm.VariableRateSlope2 = VariableRateSlope2;
         irm.BaseRate = BaseRate;
-        intrestRateModel[_tokenAddress]=irm;
+        intrestRateModel[_tokenAddress] = irm;
         return true;
     }
+
     function AddOrUpdateTokenBorrowLimiations(
         address _tokenAddress,
         uint256 CollateralFator,
@@ -106,37 +157,37 @@ contract Governance is Ownable {
         bL.InitialBorrowRate = InitialBorrowRate;
         bL.MAX_UTILIZATION_RATE = MAX_UTILIZATION_RATE;
         bL.AllowStableJob = AllowStableJob;
-        borrowLimitations[_tokenAddress]=bL;
+        bL.tokenAddress = _tokenAddress;
+        borrowLimitations[_tokenAddress] = bL;
         return true;
     }
 
     function AddAggregators(
         address _tokenAddress,
         address _aggregatorAddress,
-        int256 _decimals,
+        uint256 _decimals,
         address _targetToken,
         bool _isApplicable
     ) public returns (bool) {
         TokenAggregators memory aggregator;
         aggregator.aggregatorAddress = _aggregatorAddress;
         aggregator.decimals = _decimals;
+        aggregator.tokenAddress = _tokenAddress;
         aggregator.targetToken = _targetToken;
         aggregator.isApplicable = _isApplicable;
-        aggregators[_tokenAddress].push(aggregator);
+        aggregators[_tokenAddress] = aggregator;
         return true;
     }
 
     function UpdateAggregators(
         address _tokenAddress,
         address _aggregatorAddress,
+        uint256 _decimals,
         bool _isApplicable
     ) public returns (bool) {
-        for (uint256 i = 0; i < aggregators[_tokenAddress].length; i++) {
-            if (aggregators[_tokenAddress][i].aggregatorAddress == _aggregatorAddress) {
-                aggregators[_tokenAddress][i].isApplicable = _isApplicable;
-            }
-        }
-
+        aggregators[_tokenAddress].aggregatorAddress = _aggregatorAddress;
+        aggregators[_tokenAddress].decimals = _decimals;
+        aggregators[_tokenAddress].isApplicable = _isApplicable;
         return true;
     }
 
@@ -155,6 +206,8 @@ contract Governance is Ownable {
             TotalTokens += 1;
             TokenAddresses.push(_tokenAddress);
         }
+
+        tokens[_tokenAddress].tokenAddress = _tokenAddress;
         tokens[_tokenAddress].symbol = _symbol;
         tokens[_tokenAddress].name = _name;
         tokens[_tokenAddress].icon = _icon;
@@ -179,6 +232,30 @@ contract Governance is Ownable {
         return memoryArray;
     }
 
+    function getAllAggregators() public view returns (TokenAggregators[] memory) {
+        TokenAggregators[] memory memoryArray = new TokenAggregators[](TotalTokens);
+        for (uint256 i = 0; i < TotalTokens; i++) {
+            memoryArray[i] = aggregators[TokenAddresses[i]];
+        }
+        return memoryArray;
+    }
+
+    function getAllTokenBorrowLimitations() public view returns (TokenBorrowLimitations[] memory) {
+        TokenBorrowLimitations[] memory memoryArray = new TokenBorrowLimitations[](TotalTokens);
+        for (uint256 i = 0; i < TotalTokens; i++) {
+            memoryArray[i] = borrowLimitations[TokenAddresses[i]];
+        }
+        return memoryArray;
+    }
+
+    function getAllTokenIntrestRateModel() public view returns (TokenIntrestRateModel[] memory) {
+        TokenIntrestRateModel[] memory memoryArray = new TokenIntrestRateModel[](TotalTokens);
+        for (uint256 i = 0; i < TotalTokens; i++) {
+            memoryArray[i] = intrestRateModel[TokenAddresses[i]];
+        }
+        return memoryArray;
+    }
+
     function getAllTokenAddresses() public view returns (address[] memory) {
         return TokenAddresses;
     }
@@ -190,6 +267,7 @@ contract Governance is Ownable {
     function getTokenBorrowLimiatations(address _tokenAddress) public view returns (TokenBorrowLimitations memory) {
         return borrowLimitations[_tokenAddress];
     }
+
     function getTokenIntrestRateModel(address _tokenAddress) public view returns (TokenIntrestRateModel memory) {
         return intrestRateModel[_tokenAddress];
     }
