@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+//SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.9;
 
 contract FluteStaking{
     IERC20 public immutable stakingToken;
@@ -15,6 +15,8 @@ contract FluteStaking{
     uint public updatedAt;
     // Reward to be paid out per second
     uint public rewardRate;
+    // Percentage of provider share over the reward rate
+    uint public providerShare;
     // Sum of (reward rate * dt * 1e18 / total supply)
     uint public rewardPerTokenStored;
     // User address => rewardPerTokenStored
