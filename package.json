@@ -10,6 +10,7 @@
   
     "deploy-staking":"npx hardhat compile && npx hardhat run --network goerli scripts/deployStaking.js",
     "deploy-sOffering":"npx hardhat compile && npx hardhat run --network goerli scripts/deploySOfferings.js",
+    
     "test-sOffering":"hardhat test test/stakingOfferings.js --network hardhat",
     "test-lending":"hardhat test test/lendingPool.js --network hardhat",
     "test-governance":"hardhat test test/governance.js --network hardhat"
