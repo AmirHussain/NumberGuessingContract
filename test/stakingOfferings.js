@@ -29,9 +29,15 @@ describe('stakingOffering contract test cases', function () {
          token_symbol:'my token symbol ',
          token_name:'my token name'
     }
-        await stakingOffering.AddStakingOption
-            ('0x21c639bBC0ce1be64a442dc495867a4F1D2122d0', sToken, sToken,
-            decimalToBigUints(new Date().toString(),0) ,decimalToBig('90') , true,false,decimalToBig('0.1')
+        await stakingOffering.AddStakingOption(
+            '0x21c639bBC0ce1be64a442dc495867a4F1D2122d0', 
+            sToken, 
+            sToken,
+            decimalToBigUints(new Date().toString(),0) ,
+            decimalToBig('90') , 
+            true,
+            false,
+            decimalToBig('0.1')
             );
         const stakings = await stakingOffering.GetAllStakingOptions()
         console.log(stakings)

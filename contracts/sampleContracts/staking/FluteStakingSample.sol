@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8;
 
-contract FluteStaking{
+contract FluteStakingSample{
     IERC20 public immutable stakingToken;
     IERC20 public immutable rewardsToken;
 

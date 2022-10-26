@@ -17,13 +17,13 @@ contract Governance is Ownable {
 
     struct Token {
         address tokenAddress;
-        string name;
-        string symbol;
-        string icon;
-        string abiJSON;
+        string  name;
+        string  symbol;
+        string  icon;
+        string  abiJSON;
         address pedgeToken;
-        bool isPedgeToken;
-        bool isDeleted;
+        bool    isPedgeToken;
+        bool    isDeleted;
     }
 
     struct TokenAggregators {
