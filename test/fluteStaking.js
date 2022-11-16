@@ -46,7 +46,7 @@ describe("Staking test", function () {
 
 
   it("Staking to the contract", async function () {
-    let amount = decimalToBig("1000")
+    let amount = decimalToBig("100")
     await rtn.transfer(staking.address,decimalToBig("100000"))
     await staking.setRewardsDuration(SECONDS_IN_DAY);
 
@@ -58,8 +58,8 @@ describe("Staking test", function () {
 
 
     console.log("Reward per token ", await staking.rewardPerToken());
-    let earned = await staking.earned(owner.address);
-    console.log("earned",earned)
+    let earned = bigToDecimal(await staking.earned(owner.address));
+    console.log("earned", earned)
     console.log("Timestamp",await staking.getBlockTimeStamp());
     console.log("lastTimeRewardApplicable",await staking.lastTimeRewardApplicable());
 
