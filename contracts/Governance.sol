@@ -17,13 +17,13 @@ contract Governance is Ownable {
 
     struct Token {
         address tokenAddress;
-        string  name;
-        string  symbol;
-        string  icon;
-        string  abiJSON;
+        string name;
+        string symbol;
+        string icon;
+        string abiJSON;
         address pedgeToken;
-        bool    isPedgeToken;
-        bool    isDeleted;
+        bool isPedgeToken;
+        bool isDeleted;
     }
 
     struct TokenAggregators {
@@ -46,6 +46,7 @@ contract Governance is Ownable {
     }
 
     struct TokenIntrestRateModel {
+        address tokenAddress;
         uint256 OPTIMAL_UTILIZATION_RATE;
         uint256 StableRateSlope1;
         uint256 StableRateSlope2;
@@ -55,10 +56,12 @@ contract Governance is Ownable {
     }
 
     struct TokenAdaptiveLimitations {
+        
+        string operator;
         string Utilization;
         string Withdraw;
         string Borrow;
-        bool Replinish;
+        bool Replenish;
         bool Redeem;
         bool IsApplicable;
     }
@@ -74,17 +77,20 @@ contract Governance is Ownable {
 
     function AddTokenAdaptiveLimitations(
         address _tokenAddress,
+        string memory operator,
         string memory Utilization,
         string memory Withdraw,
         string memory Borrow,
-        bool Replinish,
+        bool Replenish,
         bool Redeem
     ) public returns (bool) {
         TokenAdaptiveLimitations memory TAL;
         TAL.Utilization = Utilization;
+        TAL.operator = operator;
+        
         TAL.Withdraw = Withdraw;
         TAL.Borrow = Borrow;
-        TAL.Replinish = Replinish;
+        TAL.Replenish = Replenish;
         TAL.Redeem = Redeem;
         TAL.IsApplicable = true;
         adaptiveLimitations[_tokenAddress].push(TAL);
@@ -94,17 +100,19 @@ contract Governance is Ownable {
     function UpdateTokenAdaptiveLimitations(
         address _tokenAddress,
         uint256 _rowIndex,
+        string memory operator,
         string memory Utilization,
         string memory Withdraw,
         string memory Borrow,
-        bool Replinish,
+        bool Replenish,
         bool Redeem
     ) public returns (bool) {
         TokenAdaptiveLimitations memory TAL;
+        TAL.operator = operator;
         TAL.Utilization = Utilization;
         TAL.Withdraw = Withdraw;
         TAL.Borrow = Borrow;
-        TAL.Replinish = Replinish;
+        TAL.Replenish = Replenish;
         TAL.Redeem = Redeem;
         adaptiveLimitations[_tokenAddress][_rowIndex] = TAL;
         return true;
@@ -134,7 +142,8 @@ contract Governance is Ownable {
         irm.StableRateSlope2 = StableRateSlope2;
         irm.VariableRateSlope1 = VariableRateSlope1;
         irm.VariableRateSlope2 = VariableRateSlope2;
-        irm.BaseRate = BaseRate;
+        irm.BaseRate = BaseRate; 
+        irm.tokenAddress = _tokenAddress;
         intrestRateModel[_tokenAddress] = irm;
         return true;
     }
@@ -202,6 +211,7 @@ contract Governance is Ownable {
         bool _isDeleted,
         bool _new
     ) public returns (bool) {
+        // check if token already exists
         if (_new) {
             TotalTokens += 1;
             TokenAddresses.push(_tokenAddress);

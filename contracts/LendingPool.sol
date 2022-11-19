@@ -88,12 +88,12 @@ contract LendingPool is Ownable, Math {
     mapping(address => mapping(string => uint256)) public borrowerShares;
 
     struct IntrestRateModal {
-        uint256 OPTIMAL_UTILIZATION_RATE;
-        uint256 stableRateSlope1;
-        uint256 stableRateSlope2;
-        uint256 variableRateSlope1;
-        uint256 variableRateSlope2;
-        uint256 baseRate;
+       uint256 OPTIMAL_UTILIZATION_RATE;
+        uint256 StableRateSlope1;
+        uint256 StableRateSlope2;
+        uint256 VariableRateSlope1;
+        uint256 VariableRateSlope2;
+        uint256 BaseRate;
     }
 
     struct Aggregators {
@@ -227,7 +227,7 @@ contract LendingPool is Ownable, Math {
         }
         uint256 repayCollateralAmount = mapBorrowerInfo[_borrowerId].collateralAmount;
         if (mapBorrowerInfo[_borrowerId].isStableBorrow) {
-            IRS.baseRate = mapBorrowerInfo[_borrowerId].borrowRate;
+            IRS.BaseRate = mapBorrowerInfo[_borrowerId].borrowRate;
         }
         (uint256 fee, uint256 paid) = calculateBorrowFee(IRS, _loanAmount, _loanToken, mapBorrowerInfo[_borrowerId].isStableBorrow);
         require(mapBorrowerInfo[_borrowerId].loanAmount >= paid, 'Your custom message here');
@@ -333,7 +333,7 @@ contract LendingPool is Ownable, Math {
         uint256 uRatio = _utilizationRatio(token);
         uint256 fee;
         if (isStableBorrow) {
-            fee = mulExp(_amount, irs.baseRate);
+            fee = mulExp(_amount, irs.BaseRate);
         } else {
             (, uint256 currentVariableBorrowRate) = getCurrentStableAndVariableBorrowRate(uRatio, irs);
             fee = mulExp(_amount, currentVariableBorrowRate);
@@ -367,19 +367,19 @@ contract LendingPool is Ownable, Math {
         if (utilizationRate >= irs.OPTIMAL_UTILIZATION_RATE) {
             uint256 excessUtilizationRateRatio = utilizationRate.sub(irs.OPTIMAL_UTILIZATION_RATE);
             uint256 unit1 = 1 * 10**18;
-            uint256 currentStableBorrowRate = irs.baseRate.add(irs.stableRateSlope1).add(
-                (excessUtilizationRateRatio.mul(1 * 10**18).div(unit1.sub(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.stableRateSlope2).div(1 * 10**18))
+            uint256 currentStableBorrowRate = irs.BaseRate.add(irs.StableRateSlope1).add(
+                (excessUtilizationRateRatio.mul(1 * 10**18).div(unit1.sub(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.StableRateSlope2).div(1 * 10**18))
             );
-            uint256 currentVariableBorrowRate = irs.baseRate.add(irs.variableRateSlope1).add(
-                (excessUtilizationRateRatio.mul(1 * 10**18).div(unit1.sub(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.variableRateSlope2).div(1 * 10**18))
+            uint256 currentVariableBorrowRate = irs.BaseRate.add(irs.VariableRateSlope1).add(
+                (excessUtilizationRateRatio.mul(1 * 10**18).div(unit1.sub(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.VariableRateSlope2).div(1 * 10**18))
             );
             return (currentStableBorrowRate, currentVariableBorrowRate);
         } else {
-            uint256 currentStableBorrowRate = irs.baseRate.add(
-                ((utilizationRate.mul(1 * 10**18).div(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.stableRateSlope1)).div(1 * 10**18)
+            uint256 currentStableBorrowRate = irs.BaseRate.add(
+                ((utilizationRate.mul(1 * 10**18).div(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.StableRateSlope1)).div(1 * 10**18)
             );
-            uint256 currentVariableBorrowRate = irs.baseRate.add(
-                ((utilizationRate.mul(1 * 10**18).div(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.variableRateSlope1)).div(1 * 10**18)
+            uint256 currentVariableBorrowRate = irs.BaseRate.add(
+                ((utilizationRate.mul(1 * 10**18).div(irs.OPTIMAL_UTILIZATION_RATE)).mul(irs.VariableRateSlope1)).div(1 * 10**18)
             );
             return (currentStableBorrowRate, currentVariableBorrowRate);
         }

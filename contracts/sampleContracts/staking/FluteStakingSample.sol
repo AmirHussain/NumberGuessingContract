@@ -4,9 +4,8 @@ pragma solidity ^0.8;
 contract FluteStakingSample{
     IERC20 public immutable stakingToken;
     IERC20 public immutable rewardsToken;
-
+    
     address public owner;
-
     // Duration of rewards to be paid out (in seconds)
     uint public duration;
     // Timestamp of when the rewards finish
@@ -93,6 +92,8 @@ contract FluteStakingSample{
             rewardsToken.transfer(msg.sender, reward);
         }
     }
+
+    //compoundingTheEarnedAmount()
 
     function setRewardsDuration(uint _duration) external onlyOwner {
         require(finishAt < block.timestamp, "reward duration not finished");

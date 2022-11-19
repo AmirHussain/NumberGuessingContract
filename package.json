@@ -7,6 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy-lending":"npx hardhat compile && npx hardhat run --network goerli scripts/deploy.js",
     "deploy-gov":"npx hardhat compile && npx hardhat run --network goerli scripts/deployGov.js",
+    "deploy-gov-vot":"npx hardhat compile && npx hardhat run --network goerli scripts/deployGovVoting.js",
   
     "deploy-staking":"npx hardhat compile && npx hardhat run --network goerli scripts/deployStaking.js",
     "deploy-sOffering":"npx hardhat compile && npx hardhat run --network goerli scripts/deploySOfferings.js",
