@@ -53,15 +53,15 @@ contract GovernanceVoting {
         uint256 weightage;
     }
 
-    address[] UserAddresses;
+    address[] public UserAddresses;
     mapping(address => proposalsObj[]) public proposalsMap; //proposals will be array because one use can create more then one proposals
     mapping(uint256 => historyObj) public historyMap; //uint will be the proposal id
     mapping(uint256 => votingObj) public votingMap; //uint will be the proposal id
     mapping(uint256 => weightageObj[]) public weightageMap; //proposals will be array because one use can create more then one proposals
 
-    function inArray(address who) public view returns (bool) {
+    function inArray(address _address) public view returns (bool) {
         // address 0x0 is not valid if pos is 0 is not in the array
-        if (proposalsMap[who].length > 0) {
+        if (proposalsMap[_address].length > 0) {
             return true;
         }
         return false;
@@ -171,5 +171,9 @@ contract GovernanceVoting {
         w.weightage = _weightage;
         weightageMap[_proposalId].push(w);
         return true;
+    }
+
+    function getUserAddressLength() public view returns(uint){
+        return UserAddresses.length;
     }
 }
