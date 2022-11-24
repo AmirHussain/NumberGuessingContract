@@ -15,7 +15,7 @@
     "test-sOffering":"hardhat test test/stakingOfferings.js --network hardhat",
     "test-lending":"hardhat test test/lendingPool.js --network hardhat",
     "test-governance":"hardhat test test/governance.js --network hardhat",
-    "test-gov-test":"hardhat test test/governanceVoting.js --network hardhat"
+    "test-gov-vot":"hardhat test test/governanceVoting.js --network hardhat"
 
   },
   "author": "Jahanzaib",

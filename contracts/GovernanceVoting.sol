@@ -23,6 +23,12 @@ contract GovernanceVoting {
 
     uint256 public totalProposals = 0;
     address public owner;
+     string public createdStatus = 'created';
+    string public activeStatus = 'active';
+    string public successStatus = 'succeeded';
+    string public rejectedStatus = 'rejected';
+    string public queuedStatus = 'queued';
+    string public executedStatus = 'executed';
 
     struct proposalsObj {
         uint256 id;
@@ -37,6 +43,7 @@ contract GovernanceVoting {
         uint256 createdAt;
         uint256 activeAt;
         uint256 succeededAt;
+        uint256 rejectedAt;
         uint256 queueAt;
         uint256 executeAt;
     }
@@ -72,7 +79,7 @@ contract GovernanceVoting {
         p.id = totalProposals;
         p.title = _title;
         p.description = _description;
-        p.status = 'created';
+        p.status = createdStatus;
         p.userAddress = msg.sender;
         proposalsMap[msg.sender].push(p);
 
@@ -107,6 +114,19 @@ contract GovernanceVoting {
     ) public returns (bool) {
         // require(proposalsMap[_address][_index].userAddress == msg.sender, "address not fount");
         proposalsMap[_address][_index].status = _status;
+
+        if (keccak256(abi.encodePacked(_status)) == keccak256(abi.encodePacked(activeStatus))) {
+            historyMap[_index].activeAt = block.timestamp;
+        } else if (keccak256(abi.encodePacked(_status)) == keccak256(abi.encodePacked(successStatus))) {
+            historyMap[_index].succeededAt = block.timestamp;
+        } else if (keccak256(abi.encodePacked(_status)) == keccak256(abi.encodePacked(rejectedStatus))) {
+            historyMap[_index].rejectedAt = block.timestamp;
+        } else if (keccak256(abi.encodePacked(_status)) == keccak256(abi.encodePacked(queuedStatus))) {
+            historyMap[_index].queueAt = block.timestamp;
+        } else if (keccak256(abi.encodePacked(_status)) == keccak256(abi.encodePacked(executedStatus))) {
+            historyMap[_index].executeAt = block.timestamp;
+        }
+
         return true;
     }
 
@@ -173,7 +193,7 @@ contract GovernanceVoting {
         return true;
     }
 
-    function getUserAddressLength() public view returns(uint){
+    function getUserAddressLength() public view returns (uint256) {
         return UserAddresses.length;
     }
 }
