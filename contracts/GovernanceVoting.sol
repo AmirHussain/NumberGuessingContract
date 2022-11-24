@@ -82,9 +82,8 @@ contract GovernanceVoting {
 
         //updating proposal id
         totalProposals++;
-        if (inArray(msg.sender) == false) {
-            UserAddresses.push(msg.sender);
-        }
+        UserAddresses.push(msg.sender);
+            
         return true;
     }
 
