@@ -21,9 +21,10 @@ contract GovernanceVoting {
         _;
     }
 
+    uint256 public minimumVoteWeight = 1;
     uint256 public totalProposals = 0;
     address public owner;
-     string public createdStatus = 'created';
+    string public createdStatus = 'created';
     string public activeStatus = 'active';
     string public successStatus = 'succeeded';
     string public rejectedStatus = 'rejected';
@@ -34,6 +35,8 @@ contract GovernanceVoting {
         uint256 id;
         string title;
         string description;
+        string activeUntil;
+        string proposalType;
         string status;
         address userAddress;
     }
@@ -74,34 +77,46 @@ contract GovernanceVoting {
         return false;
     }
 
-    function createProposal(string memory _title, string memory _description) public returns (bool) {
+    function createProposal(
+        string memory _title,
+        string memory _description,
+        string memory proposal_Type,
+        string memory active_Until
+    ) public returns (bool) {
         proposalsObj memory p;
         p.id = totalProposals;
         p.title = _title;
         p.description = _description;
-        p.status = createdStatus;
+        p.status = activeStatus;
+        p.proposalType = proposal_Type;
+        p.activeUntil = active_Until;
         p.userAddress = msg.sender;
         proposalsMap[msg.sender].push(p);
 
         //history
         historyMap[totalProposals].createdAt = block.timestamp;
+        historyMap[totalProposals].activeAt = block.timestamp;
         historyMap[totalProposals].proposalId = totalProposals;
 
         //updating proposal id
         totalProposals++;
         UserAddresses.push(msg.sender);
-            
+
         return true;
     }
 
     function updateProposal(
         string memory _title,
         string memory _description,
+        string memory proposal_Type,
+        string memory active_Until,
         address _address,
         uint256 _index
     ) public onlyOwner returns (bool) {
         require(proposalsMap[_address][_index].userAddress == _address, 'address not fount');
         proposalsMap[_address][_index].title = _title;
+        proposalsMap[_address][_index].proposalType = proposal_Type;
+        proposalsMap[_address][_index].activeUntil = active_Until;
         proposalsMap[_address][_index].description = _description;
         return true;
     }
@@ -192,7 +207,20 @@ contract GovernanceVoting {
         return true;
     }
 
+    function getWeightageMap(uint256 _proposalId) public view returns (weightageObj[] memory) {
+        return weightageMap[_proposalId];
+    }
+
     function getUserAddressLength() public view returns (uint256) {
         return UserAddresses.length;
+    }
+
+    function setMinWeightage(uint256 _weightage) public onlyOwner returns (bool) {
+        minimumVoteWeight = _weightage;
+        return true;
+    }
+
+    function getMinWeightage() public view returns (uint256) {
+        return minimumVoteWeight;
     }
 }
