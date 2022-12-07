@@ -61,6 +61,7 @@ contract LendingPool is Ownable, Math {
         uint256 endDay; // when lending period ends
         bool isRedeem; // if true is means he has something in pool if false it means he/she redeem
         address pledgeToken;
+        uint256 pledgeTokenAmount;
     }
     // if we have struct as above we can also map it like this
     // mapping(address => lendingMember) public mapLenderInfo;
@@ -72,16 +73,16 @@ contract LendingPool is Ownable, Math {
     //===========================================================================
     struct borrowMember {
         address borrowerAddress;
-        string loanToken;
+        string  loanToken;
         uint256 borrowAmount;
         uint256 loanAmount;
-        string collateralToken;
+        string  collateralToken;
         uint256 collateralAmount;
         uint256 borrowDay;
         uint256 endDay;
         uint256 borrowRate;
-        bool isStableBorrow;
-        bool hasRepaid;
+        bool    isStableBorrow;
+        bool    hasRepaid;
     }
     mapping(uint256 => borrowMember) public mapBorrowerInfo;
     mapping(address => mapping(string => uint256[])) public borrowerIds;
@@ -109,16 +110,13 @@ contract LendingPool is Ownable, Math {
         uint256 _amount,
         uint256 _days,
         address _token,
-        address _ftoken
+        address _fftToken,
+        address _fftAggre,
+        address _tokenAggre
     ) public payable {
         require(msg.value <= 0, 'Can not send 0 amount');
 
-        // mapLenderInfo[msg.sender][_tokenSymbol].lenderAddress = msg.sender;
-        // mapLenderInfo[msg.sender][_tokenSymbol].token = _tokenSymbol;
-        // mapLenderInfo[msg.sender][_tokenSymbol].tokenAmount = _amount;
-        // mapLenderInfo[msg.sender][_tokenSymbol].startDay = block.timestamp;
-        // mapLenderInfo[msg.sender][_tokenSymbol].endDay = block.timestamp + _days * 1 days;
-        // mapLenderInfo[msg.sender][_tokenSymbol].isRedeem = false;
+
         lendingId += 1;
         lenderIds[msg.sender][_tokenSymbol].push(lendingId);
         lenderShares[msg.sender][_tokenSymbol] += _amount;
@@ -130,9 +128,24 @@ contract LendingPool is Ownable, Math {
         mapLenderInfo[lendingId].startDay = block.timestamp;
         mapLenderInfo[lendingId].endDay = block.timestamp + _days * 1 days;
         mapLenderInfo[lendingId].isRedeem = false;
-        mapLenderInfo[lendingId].pledgeToken = _ftoken;
-        ERC20(_token).transferFrom(msg.sender, address(this), _amount);
-        ERC20(_ftoken).mint(msg.sender, _amount);
+        mapLenderInfo[lendingId].pledgeToken = _fftToken;
+
+
+        if(_fftAggre != address(0)){
+            uint tokenPriceUSD = getAggregatorPrice(_tokenAggre); // 1 eth =>1000 
+            uint fftAggre = getAggregatorPrice(_fftAggre); 
+            uint fftToMint = tokenPriceUSD.div(fftAggre);
+            ERC20(_token).transferFrom(msg.sender, address(this), _amount);
+            ERC20(_fftToken).mint(msg.sender, fftToMint);
+            mapLenderInfo[lendingId].pledgeTokenAmount = fftToMint;
+
+        }else{
+            ERC20(_token).transferFrom(msg.sender, address(this), _amount);
+            ERC20(_fftToken).mint(msg.sender, _amount);
+            mapLenderInfo[lendingId].pledgeTokenAmount = _amount;
+        }
+
+        
     }
 
     // function isLenderExist (address _address) public view return (bool){
@@ -170,8 +183,11 @@ contract LendingPool is Ownable, Math {
         totalLendings[_token] -= _amount;
         uint256 profit = getLendingProfitAmount(_amount, _token, IRS);
         reserve[_token] -= profit;
+
+        // ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), _amount);
+        uint fftAmount = mapLenderInfo[_lendeingId].pledgeTokenAmount;
         ERC20(_token).transfer(msg.sender, _amount.add(profit));
-        ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), _amount);
+        ERC20(mapLenderInfo[_lendeingId].pledgeToken).transferFrom(msg.sender, address(this), fftAmount);
     }
 
     function borrow(
@@ -273,6 +289,7 @@ contract LendingPool is Ownable, Math {
         // 1dai=1usd
         AggregatorV3Interface CollateralPrice = AggregatorV3Interface(collateralTokenAggregator);
         (, int256 price, , , ) = CollateralPrice.latestRoundData();
+
         AggregatorV3Interface LoanPrice = AggregatorV3Interface(loanTokenAggregator);
         (, int256 loanPrice, , , ) = LoanPrice.latestRoundData();
 
