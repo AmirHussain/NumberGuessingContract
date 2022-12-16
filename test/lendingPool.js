@@ -8,11 +8,11 @@ describe('Lending contract test cases', function () {
   let owner, user1, user2, user3, user4, restUsers;
   let weth, fWeth, dai, fDai, lending;
   let OPTIMAL_UTILIZATION_RATE = decimalToBig('0.70');
-  let stableRateSlope1 = decimalToBig('0.02')
-  let stableRateSlope2 = decimalToBig('0.03')
-  let variableRateSlope1 = decimalToBig('0.01')
-  let variableRateSlope2 = decimalToBig('0.02')
-  let baseRate = decimalToBig('0.04')
+  let StableRateSlope1 = decimalToBig('0.02')
+  let StableRateSlope2 = decimalToBig('0.03')
+  let VariableRateSlope1 = decimalToBig('0.01')
+  let VariableRateSlope2 = decimalToBig('0.02')
+  let BaseRate = decimalToBig('0.04')
   it('beforeAll', async function () {
     if (network.name != 'hardhat') {
       console.log('PLEASE USE --network hardhat');
@@ -115,11 +115,11 @@ describe('Lending contract test cases', function () {
   //     weth.address,
   //     1 ,
   //     {OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate});
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate});
 
   // });
 
@@ -143,11 +143,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = await lending._utilizationRatio(weth.address);
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
 
   //   const result = await lending.getCurrentStableAndVariableBorrowRate(
@@ -162,11 +162,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.0');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -177,11 +177,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.10');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -192,11 +192,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.20');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -207,11 +207,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.30');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -222,11 +222,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.40');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -237,11 +237,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.50');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -253,11 +253,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.60');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -268,11 +268,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.70');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -283,11 +283,11 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.80');
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.getCurrentStableAndVariableBorrowRate(uratio, IntrestRateModal);
@@ -298,11 +298,11 @@ describe('Lending contract test cases', function () {
   //   const borrow = await lending.calculateBorrowFee(
   //     {
   //       OPTIMAL_UTILIZATION_RATE,
-  //       stableRateSlope1,
-  //       stableRateSlope2,
-  //       variableRateSlope1,
-  //       variableRateSlope2,
-  //       baseRate
+  //       StableRateSlope1,
+  //       StableRateSlope2,
+  //       VariableRateSlope1,
+  //       VariableRateSlope2,
+  //       BaseRate
   //     },
   //     decimalToBig("1"),
   //     weth.address, false
@@ -327,12 +327,12 @@ describe('Lending contract test cases', function () {
   // //     weth.address,
   // //     dai.address, id[0],   
   // //     {
-  // //       baseRate,
+  // //       BaseRate,
   // //       OPTIMAL_UTILIZATION_RATE,
-  // //       stableRateSlope1,
-  // //       stableRateSlope2,
-  // //       variableRateSlope1,
-  // //       variableRateSlope2
+  // //       StableRateSlope1,
+  // //       StableRateSlope2,
+  // //       VariableRateSlope1,
+  // //       VariableRateSlope2
   // //     });
   // //   console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
   // //   console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
@@ -341,44 +341,43 @@ describe('Lending contract test cases', function () {
   //   const uratio = decimalToBig('0.81')
   //   const IntrestRateModal = {
   //     OPTIMAL_UTILIZATION_RATE,
-  //     stableRateSlope1,
-  //     stableRateSlope2,
-  //     variableRateSlope1,
-  //     variableRateSlope2,
-  //     baseRate
+  //     StableRateSlope1,
+  //     StableRateSlope2,
+  //     VariableRateSlope1,
+  //     VariableRateSlope2,
+  //     BaseRate
   //   }
   //   const result =
   //     await lending.lendingProfiteRate(weth.address, uratio, IntrestRateModal);
   //   console.log('lendingProfiteRate', bigToDecimal(result));
   // });
 
-  // it('14 calculateCurrentLendingProfitRate ', async function () {
-  //   const supplyRate = await lending.calculateCurrentLendingProfitRate(
+  it('14 calculateCurrentLendingProfitRate ', async function () {
+    const supplyRate = await lending.calculateCurrentLendingProfitRate(
 
-  //     weth.address,
-  //     {
-  //       OPTIMAL_UTILIZATION_RATE,
-  //       stableRateSlope1,
-  //       stableRateSlope2,
-  //       variableRateSlope1,
-  //       variableRateSlope2,
-  //       baseRate
-  //     },
-  //     ProtocolShare,
-  //   );
-  //   console.log('calculateCurrentLendingProfitRate', bigToDecimal(supplyRate))
+      weth.address,
+      {
+        OPTIMAL_UTILIZATION_RATE,
+        StableRateSlope1,
+        StableRateSlope2,
+        VariableRateSlope1,
+        VariableRateSlope2,
+        BaseRate
+      }
+    );
+    console.log('calculateCurrentLendingProfitRate', bigToDecimal(supplyRate))
 
-  // });
+  });
 
   // // it('15 getBorrowRateSlope ', async function () {
   // //   const getBorrowRateSlope=await lending.getBorrowRateSlope(
 
   // //      {OPTIMAL_UTILIZATION_RATE,
-  // //     stableRateSlope1,
-  // //     stableRateSlope2,
-  // //     variableRateSlope1,
-  // //     variableRateSlope2,
-  // //     baseRate},
+  // //     StableRateSlope1,
+  // //     StableRateSlope2,
+  // //     VariableRateSlope1,
+  // //     VariableRateSlope2,
+  // //     BaseRate},
   // //     weth.address,
 
   // //     );
@@ -391,11 +390,11 @@ describe('Lending contract test cases', function () {
   // //     weth.address,
   // //     {
   // //       OPTIMAL_UTILIZATION_RATE,
-  // //       stableRateSlope1,
-  // //       stableRateSlope2,
-  // //       variableRateSlope1,
-  // //       variableRateSlope2,
-  // //       baseRate
+  // //       StableRateSlope1,
+  // //       StableRateSlope2,
+  // //       VariableRateSlope1,
+  // //       VariableRateSlope2,
+  // //       BaseRate
   // //     }
   // //   );
   // //   console.log('lendingProfiteRateSlope', bigToDecimal(supplyRate) )
@@ -406,11 +405,11 @@ describe('Lending contract test cases', function () {
       weth.address,
       {
         OPTIMAL_UTILIZATION_RATE,
-        stableRateSlope1,
-        stableRateSlope2,
-        variableRateSlope1,
-        variableRateSlope2,
-        baseRate
+        StableRateSlope1,
+        StableRateSlope2,
+        VariableRateSlope1,
+        VariableRateSlope2,
+        BaseRate
       },
       decimalToBigUints('0.8',2)
     );

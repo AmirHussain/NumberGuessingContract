@@ -22,7 +22,7 @@ async function deployStuff() {
 
   if (lendingAddress == 0) {
       console.log("deploy lending on GOERLI")
-      customERC20 = await CUSTOM_ERC20.deploy('Pledged Dai Stable Coin', 'fDAI')
+      customERC20 = await CUSTOM_ERC20.deploy('Flute Finance Token', 'FFT')
      
       console.log("lending contract : ",customERC20.address," tx ",customERC20.deployTransaction.hash)
       console.log("deployed lending : ",customERC20.deployTransaction.hash, customERC20.address)
@@ -30,7 +30,7 @@ async function deployStuff() {
       console.log(recipt.status == 1 ? "success": "failed")
       await run("verify:verify", {
           address: customERC20.address,
-          constructorArguments: ['Pledged Dai Stable Coin', 'fDAI']
+          constructorArguments: ['Flute Finance Token', 'FFT']
       });
 
   } else {
