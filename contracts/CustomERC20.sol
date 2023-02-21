@@ -8,7 +8,7 @@ contract customERC20 is ERC20, Ownable {
     string private _name;
     string private _symbol;
     mapping(address => bool) public authorisedMinters;
-    event AuthChanged(address user,bool auth);
+    event AuthChanged(address user, bool auth);
 
     modifier onlyAuth() {
         require(authorisedMinters[msg.sender] || msg.sender == owner(), 'Not Authorised');
@@ -23,6 +23,10 @@ contract customERC20 is ERC20, Ownable {
 
     function mint(address to, uint256 amount) public onlyAuth {
         _mint(to, amount);
+    }
+
+    function burn(address to, uint256 amount) public onlyAuth {
+        _burn(to, amount);
     }
 
     function name() public view virtual override returns (string memory) {

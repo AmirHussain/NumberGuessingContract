@@ -2,17 +2,17 @@ const { time, loadFixture } = require('@nomicfoundation/hardhat-network-helpers'
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { bigToDecimal, decimalToBig, bigToDecimalUints, decimalToBigUints } = require('./utils/helper');
+const { bigToDecimal, decimalToBig, bigToDecimalUints, decimalToBigUnits } = require('./utils/helper');
 
 describe('Lending contract test cases', function () {
   let owner, user1, user2, user3, user4, restUsers;
-  let weth, fWeth, dai, fDai, lending;
+  let weth, fft, dai, fDai, lending;
   let OPTIMAL_UTILIZATION_RATE = decimalToBig('0.70');
-  let StableRateSlope1 = decimalToBig('0.02')
-  let StableRateSlope2 = decimalToBig('0.03')
-  let VariableRateSlope1 = decimalToBig('0.01')
-  let VariableRateSlope2 = decimalToBig('0.02')
-  let BaseRate = decimalToBig('0.04')
+  let StableRateSlope1 = decimalToBig('0.02');
+  let StableRateSlope2 = decimalToBig('0.03');
+  let VariableRateSlope1 = decimalToBig('0.01');
+  let VariableRateSlope2 = decimalToBig('0.02');
+  let BaseRate = decimalToBig('0.04');
   it('beforeAll', async function () {
     if (network.name != 'hardhat') {
       console.log('PLEASE USE --network hardhat');
@@ -28,111 +28,183 @@ describe('Lending contract test cases', function () {
   it('1. deploying tokens and lending', async function () {
     ERC20 = await ethers.getContractFactory('customERC20');
     weth = await ERC20.deploy('Wrapped Ether', 'WETH');
-    fWeth = await ERC20.deploy('Pledged Wrapped Ether', 'fWETH');
-    dai = await ERC20.deploy('Dai Stable Coin', 'DAI');
-    fDai = await ERC20.deploy('Pledged Dai Stable Coin', 'fDAI');
+    fft = await ERC20.deploy('FFT', 'FFT');
+    dai = await ERC20.deploy('dai', 'dai');
+
     console.log(weth.address);
 
     LENDING = await ethers.getContractFactory('LendingPool');
-    // lending = await LENDING.deploy(weth.address, fWeth.address, dai.address, fDai.address);
-    lending = await LENDING.deploy();
+    // lending = await LENDING.deploy(weth.address, fft.address, dai.address, fDai.address);
+    lending = await LENDING.deploy({ gasLimit: 10548748 });
     console.log('Lending address => ', lending.address);
-    await weth.setAuthorisedMinter(lending.address, true);
-    await fWeth.setAuthorisedMinter(lending.address, true);
-    await dai.setAuthorisedMinter(lending.address, true);
-    await fDai.setAuthorisedMinter(lending.address, true);
-    expect(await weth.isAuthorisedMinter(lending.address)).to.equal(true)
-    expect(await fWeth.isAuthorisedMinter(lending.address)).to.equal(true)
-    expect(await dai.isAuthorisedMinter(lending.address)).to.equal(true)
-    expect(await fDai.isAuthorisedMinter(lending.address)).to.equal(true)
-    await lending.setPercentage(decimalToBig('70'));
-
+    // await weth.setAuthorisedMinter(lending.address, true);
+    await fft.setAuthorisedMinter(lending.address, true);
+    // expect(await weth.isAuthorisedMinter(lending.address)).to.equal(true);
+    expect(await fft.isAuthorisedMinter(lending.address)).to.equal(true);
   });
 
-
-
   it('2. checking balances and transfering some tokens', async function () {
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('100000.0')
-    await weth.transfer(user1.address, decimalToBig('10.0'));
-    await weth.transfer(user2.address, decimalToBig('10'));
-    await weth.transfer(lending.address, decimalToBig('10'));
-    await dai.transfer(lending.address, decimalToBig('1000'));
-
-    expect(bigToDecimal(await weth.balanceOf(user1.address))).to.equal("10.0")
-    expect(bigToDecimal(await weth.balanceOf(user2.address))).to.equal("10.0")
-    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal("10.0")
-    expect(bigToDecimal(await dai.balanceOf(lending.address))).to.equal("1000.0")
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal("99970.0")
+    // await weth.transfer(owner.address, decimalToBig('100.0'), { gasLimit: 548748 });
+    // await dai.transfer(lending.address, decimalToBigUnits('110000000000000000000', 0), { gasLimit: 548748 });
+    // await dai.transfer(user1.address, decimalToBigUnits('110000000000000000000', 0), { gasLimit: 548748 });
+    // await dai.transfer(user2.address, decimalToBigUnits('110000000000000000000', 0), { gasLimit: 548748 });
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('100000.0');
+    // expect(bigToDecimal(await weth.balanceOf(user2.address))).to.equal('10.0');
+    // expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('10.0');
+    // expect(bigToDecimal(await dai.balanceOf(lending.address))).to.equal('110.0');
+    // expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('10.0');
+    // expect(bigToDecimal(await dai.balanceOf(user1.address))).to.equal('110.0');
+    // expect(bigToDecimal(await dai.balanceOf(user2.address))).to.equal('110.0');
   });
 
   it('3. lending test', async function () {
     const wethSymbol = await weth.symbol();
-    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('10.0');
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99970.0');
-    expect(bigToDecimal(await fWeth.balanceOf(lending.address))).to.equal('0.0');
 
-    await weth.approve(lending.address, decimalToBig('100'))
-    await lending.lend(wethSymbol, decimalToBig('100'), '2', weth.address, fWeth.address);
+    await weth.approve(lending.address, decimalToBig('10'));
 
-    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal("110.0");
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal("99870.0");
+    const lendingToken = {
+      symbol: weth.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1000', 0),
+      tokenAddress: weth.address // address of the user that lended
+    };
+    const pedgeToken = {
+      symbol: fft.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1', 0),
+      tokenAddress: fft.address // address of the user that lended
+    };
+    console.log('check lend');
+    console.log(lendingToken, pedgeToken, decimalToBig('10'), decimalToBigUnits('0', 0));
+    console.log('check lend after');
+    console.log('Flute tokens owner by owner', bigToDecimal(await fft.balanceOf(owner.address)));
+
+    await lending.lend(lendingToken, pedgeToken, decimalToBig('10'), decimalToBig('0', 0), { gasLimit: 548748 });
+
+    console.log('after lend after');
+
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99990.0');
+    console.log('Flute tokens transfered to user on lending', bigToDecimal(await fft.balanceOf(owner.address)));
+    expect(bigToDecimal(await fft.balanceOf(owner.address))).to.equal('110000.0');
 
     let lenderIds = await lending.getLenderId(wethSymbol);
     let lendedAssetDetails = await lending.getLenderAsset(1);
-    expect(bigToDecimal(await lending.getLenderShare(wethSymbol))).to.equal('100.0')
+    console.log(lenderIds, lendedAssetDetails);
+
+    expect(bigToDecimal(await lending.getLenderShare(wethSymbol))).to.equal('10.0');
+  });
+
+  it('3. lending test 2', async function () {
+    const wethSymbol = await weth.symbol();
+
+    await weth.approve(lending.address, decimalToBig('10'));
+
+    const lendingToken = {
+      symbol: weth.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1000', 0),
+      tokenAddress: weth.address // address of the user that lended
+    };
+    const pedgeToken = {
+      symbol: fft.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1', 0),
+      tokenAddress: fft.address // address of the user that lended
+    };
+    console.log('check lend');
+    console.log(lendingToken, pedgeToken, decimalToBig('10'), decimalToBigUnits('0', 0));
+    console.log('check lend after');
+    console.log('Flute tokens owner by owner', bigToDecimal(await fft.balanceOf(owner.address)));
+
+    await lending.lend(lendingToken, pedgeToken, decimalToBig('10'), decimalToBig('0', 0), { gasLimit: 548748 });
+
+    console.log('after lend after');
+
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99980.0');
+    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('20.0');
+
+    console.log('Flute tokens transfered to user on lending', bigToDecimal(await fft.balanceOf(owner.address)));
+    expect(bigToDecimal(await fft.balanceOf(owner.address))).to.equal('120000.0');
+
+    let lenderIds = await lending.getLenderId(wethSymbol);
+    let lendedAssetDetails = await lending.getLenderAsset(1);
+    console.log(lenderIds, lendedAssetDetails);
+
+    expect(bigToDecimal(await lending.getLenderShare(wethSymbol))).to.equal('20.0');
   });
 
   it('4 borrow test with hardcoded aggragator values', async function () {
-    const wethSymbol = await weth.symbol()
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal("99870.0");
-    expect(bigToDecimal(await dai.balanceOf(owner.address))).to.equal("99000.0");
-    let colletaralAmount = await lending.getColateralAmount3(decimalToBig('1')); // colletaral for 10 eth
-    expect(bigToDecimal(colletaralAmount)).to.equal('1429.236851642857142857')
-    await dai.approve(lending.address, colletaralAmount)
-    await lending.borrow(
-      wethSymbol,
-      decimalToBig("80"),
-      weth.address,
-      dai.symbol(),
-      dai.address,
-      colletaralAmount,
-      decimalToBig("0.04"), //_stableBorrowRate
-      false
-    );
-    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal("99871.0");
-    expect(bigToDecimal(await dai.balanceOf(owner.address))).to.equal("97570.763148357142857143");
-
+    const wethSymbol = await weth.symbol();
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99980.0');
+    expect(bigToDecimal(await dai.balanceOf(owner.address))).to.equal('100000.0');
+    let colletaralAmount = '1428.571'; // colletaral for 10 eth
+    expect(colletaralAmount).to.equal('1428.571');
+    await dai.approve(lending.address, decimalToBig(colletaralAmount));
+    const loanTokenTuple = {
+      symbol: weth.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1215', 0),
+      tokenAddress: weth.address // address of the user that lended
+    };
+    const collateralTokenTuple = {
+      symbol: dai.symbol(),
+      unitPriceInUSD: decimalToBigUnits('1', 0),
+      tokenAddress: dai.address // address of the user that lended
+    };
+    console.log('apfter approval');
+    await lending.borrow(loanTokenTuple, collateralTokenTuple, decimalToBig('1'), decimalToBig('1428.571'), decimalToBig('0.04'), false, {
+      gasLimit: 748748
+    });
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99981.0');
+    expect(bigToDecimal(await dai.balanceOf(owner.address))).to.equal('98571.429');
   });
 
-  // it('5. redeem test || Lender going t redeem profit', async function () {
-  //   const wethSymbol = await weth.symbol();
-  //   let bal = await fWeth.balanceOf(lending.address);
-  //   console.log(bigToDecimal(bal))
-  //   await fWeth.approve(lending.address,decimalToBig('20'))
-  //   await lending.redeem(
-  //     wethSymbol, 
-  //     decimalToBig('20'), 
-  //     weth.address,
-  //     1 ,
-  //     {OPTIMAL_UTILIZATION_RATE,
-  //     StableRateSlope1,
-  //     StableRateSlope2,
-  //     VariableRateSlope1,
-  //     VariableRateSlope2,
-  //     BaseRate});
+  it('5. redeem test || Lender going t redeem profit', async function () {
+    const wethSymbol = await weth.symbol();
+    let bal = await fft.balanceOf(lending.address);
+    console.log(bigToDecimal(bal));
 
-  // });
+    let lenderIds = await lending.getLenderId(weth.symbol());
+    let lendedAssetDetails = await lending.getLenderAsset(1);
+    console.log(lenderIds, lendedAssetDetails);
+    await fft.approve(lending.address, decimalToBigUnits('10000', 0));
+    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('19.0');
+    await lending.redeem(weth.symbol(), weth.address, decimalToBigUnits('1', 0), decimalToBig('0.02'), {
+      gasLimit: 548748
+    });
+    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('8.8');
+    expect(bigToDecimal(await fft.balanceOf(owner.address))).to.equal('110000.0');
+    expect(bigToDecimal(await dai.balanceOf(lending.address))).to.equal('1428.571');
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99991.2');
+  });
+
+  it('12 repay test', async function () {
+    const ethSymbol = await weth.symbol();
+
+    let id = await lending.getBorrowerId(weth.symbol());
+    console.log('id', id);
+
+    let detail = await lending.getBorrowerDetails(id[0]);
+    await weth.approve(
+      lending.address,
+      decimalToBig((Number(bigToDecimal(detail['loanAmount'])) + Number(bigToDecimal(detail['loanAmount'])) * 0.06).toString())
+    );
+    expect(bigToDecimal(await dai.balanceOf(lending.address))).to.equal('1428.571');
+
+    await lending.repay(detail['loanToken'], weth.address, dai.address, id[0], decimalToBig('0.00'), decimalToBig('0.06'), {
+      gasLimit: 548748
+    });
+    expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99990.14');
+    expect(bigToDecimal(await weth.balanceOf(lending.address))).to.equal('9.86');
+    expect(bigToDecimal(await dai.balanceOf(lending.address))).to.equal('0.0');
+
+    console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
+    console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
+  });
 
   // it('6. loan mock test', async function () {
   //   let loanAmount = await lending.getColateralAmount2(
-  //     decimalToBig('1000'),    // loan token 1000 DAI 
+  //     decimalToBig('1000'),    // loan token 1000 DAI
   //     decimalToBig('1'),  // today 1 eth price is $1000
   //     decimalToBig('1000'),     // colletaral price per token
   //   );
   //   expect(bigToDecimal(loanAmount)).to.equal('1.428571428571428571'); //eth
   // });
-
-
 
   // it('8. calculate_utilizationRatio', async function () {
   //   const result = await lending._utilizationRatio(weth.address);
@@ -156,7 +228,6 @@ describe('Lending contract test cases', function () {
   //   expect(bigToDecimal(result[0])).to.equal("0.04")
   //   expect(bigToDecimal(result[1])).to.equal("0.040142857142857142")
   // });
-
 
   // it('0.0 _borrowRate', async function () {
   //   const uratio = decimalToBig('0.0');
@@ -248,7 +319,6 @@ describe('Lending contract test cases', function () {
   //   console.log('_borrowRate', bigToDecimal(result[0]), bigToDecimal(result[1]))
   // });
 
-
   // it('0.60 _borrowRate', async function () {
   //   const uratio = decimalToBig('0.60');
   //   const IntrestRateModal = {
@@ -313,30 +383,6 @@ describe('Lending contract test cases', function () {
   //   expect(paid).to.equal("1.04")
   // });
 
-  // // it('12 repay test', async function () {
-  // //   const ethSymbol = await weth.symbol();
-  // //   let id = await lending.getBorrowerId(ethSymbol);
-  // //   let detail = await lending.getBorrowerDetails(id[0]);
-  // //   await weth.approve(lending.address, detail["loanAmount"]);
-  // //   // console.log('repay details',detail)
-  // //   expect(bigToDecimal(await weth.balanceOf(owner.address))).to.equal('99871.0');
-
-  // //   await lending.repay(
-  // //     detail['loanToken'],
-  // //     detail['loanAmount'],
-  // //     weth.address,
-  // //     dai.address, id[0],   
-  // //     {
-  // //       BaseRate,
-  // //       OPTIMAL_UTILIZATION_RATE,
-  // //       StableRateSlope1,
-  // //       StableRateSlope2,
-  // //       VariableRateSlope1,
-  // //       VariableRateSlope2
-  // //     });
-  // //   console.log('owner eth balance after repay =>', bigToDecimal(await weth.balanceOf(owner.address)));
-  // //   console.log('dai  balance after repay =>', bigToDecimal(await dai.balanceOf(owner.address)));
-  // // });
   // it('13 lendingProfiteRate', async function () {
   //   const uratio = decimalToBig('0.81')
   //   const IntrestRateModal = {
@@ -353,20 +399,15 @@ describe('Lending contract test cases', function () {
   // });
 
   it('14 calculateCurrentLendingProfitRate ', async function () {
-    const supplyRate = await lending.calculateCurrentLendingProfitRate(
-
-      weth.address,
-      {
-        OPTIMAL_UTILIZATION_RATE,
-        StableRateSlope1,
-        StableRateSlope2,
-        VariableRateSlope1,
-        VariableRateSlope2,
-        BaseRate
-      }
-    );
-    console.log('calculateCurrentLendingProfitRate', bigToDecimal(supplyRate))
-
+    const supplyRate = await lending.calculateCurrentLendingProfitRate(weth.address, {
+      OPTIMAL_UTILIZATION_RATE,
+      StableRateSlope1,
+      StableRateSlope2,
+      VariableRateSlope1,
+      VariableRateSlope2,
+      BaseRate
+    });
+    console.log('calculateCurrentLendingProfitRate', bigToDecimal(supplyRate));
   });
 
   // // it('15 getBorrowRateSlope ', async function () {
@@ -400,50 +441,43 @@ describe('Lending contract test cases', function () {
   // //   console.log('lendingProfiteRateSlope', bigToDecimal(supplyRate) )
 
   // // });
-  it('17 getChartData ', async function () {
-    const data = await lending.getChartData(
-      weth.address,
-      {
-        OPTIMAL_UTILIZATION_RATE,
-        StableRateSlope1,
-        StableRateSlope2,
-        VariableRateSlope1,
-        VariableRateSlope2,
-        BaseRate
-      },
-      decimalToBigUints('0.8',2)
-    );
+  // it('17 getChartData ', async function () {
+  //   const data = await lending.getChartData(
+  //     weth.address,
+  //     {
+  //       OPTIMAL_UTILIZATION_RATE,
+  //       StableRateSlope1,
+  //       StableRateSlope2,
+  //       VariableRateSlope1,
+  //       VariableRateSlope2,
+  //       BaseRate
+  //     },
+  //     decimalToBigUnits('0.8', 2)
+  //   );
 
-    console.log("getChartData", data)
+  //   console.log("getChartData", data)
 
-  });
-  it('14 getTokenDetails ', async function () {
-    const details = await lending.getTokenMarketDetails(
-      weth.address
-    );
-    console.log(details)
+  // });
+  // it('14 getTokenDetails ', async function () {
+  //   const details = await lending.getTokenMarketDetails(
+  //     weth.address
+  //   );
+  //   console.log(details)
 
-  });
+  // });
 
- 
-  it('17 getCurrentLiquidity ', async function () {
-  
-    const TokenAggregators = [
-      { tokenSymbol: '', aggregator: '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e', decimals: 18 },
-      { tokenSymbol: '', aggregator: '0x0d79df66BE487753B02D015Fb622DED7f0E9798d', decimals: 8 }
-  ]
-  const aggregators=TokenAggregators.map(token=> {return {aggregator:token.aggregator,tokenAddress:weth.address,decimal:decimalToBigUints(token.decimals.toString(),token.decimals>9?0:0)}})
-    const data = await lending.getCurrentLiquidity(
-      aggregators
-    );
-    console.log("getCurrentLiquidity", data)
-  });
- 
- 
+  // it('17 getCurrentLiquidity ', async function () {
 
-
-
-
+  //   const TokenAggregators = [
+  //     { tokenSymbol: '', aggregator: '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e', decimals: 18 },
+  //     { tokenSymbol: '', aggregator: '0x0d79df66BE487753B02D015Fb622DED7f0E9798d', decimals: 8 }
+  //   ]
+  //   const aggregators = TokenAggregators.map(token => { return { aggregator: token.aggregator, tokenAddress: weth.address, decimal: decimalToBigUnits(token.decimals.toString(), token.decimals > 9 ? 0 : 0) } })
+  //   const data = await lending.getCurrentLiquidity(
+  //     aggregators
+  //   );
+  //   console.log("getCurrentLiquidity", data)
+  // });
 
   //   async function deployOneYearLockFixture() {
   //     const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;

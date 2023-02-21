@@ -2,7 +2,7 @@ const { time, loadFixture } = require('@nomicfoundation/hardhat-network-helpers'
 const { anyValue } = require('@nomicfoundation/hardhat-chai-matchers/withArgs');
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { bigToDecimal, decimalToBig, bigToDecimalUints, decimalToBigUints } = require('./utils/helper');
+const { bigToDecimal, decimalToBig, bigToDecimalUints, decimalToBigUnits } = require('./utils/helper');
 
 describe('Lending contract test cases', function () {
   let owner, user1, user2, user3, user4, restUsers;
@@ -416,7 +416,7 @@ describe('Lending contract test cases', function () {
 //         variableRateSlope2,
 //         baseRate
 //       },
-//       decimalToBigUints('0.8',2)
+//       decimalToBigUnits('0.8',2)
 //     );
 
 //     console.log("getChartData", data)
@@ -438,7 +438,7 @@ describe('Lending contract test cases', function () {
 //       { tokenSymbol: '', aggregator: '0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e', decimals: 18 },
 //       { tokenSymbol: '', aggregator: '0x0d79df66BE487753B02D015Fb622DED7f0E9798d', decimals: 8 }
 //   ]
-//   const aggregators=TokenAggregators.map(token=> {return {aggregator:token.aggregator,tokenAddress:weth.address,decimal:decimalToBigUints(token.decimals.toString(),token.decimals>9?0:0)}})
+//   const aggregators=TokenAggregators.map(token=> {return {aggregator:token.aggregator,tokenAddress:weth.address,decimal:decimalToBigUnits(token.decimals.toString(),token.decimals>9?0:0)}})
 //     const data = await lending.getCurrentLiquidity(
 //       aggregators
 //     );

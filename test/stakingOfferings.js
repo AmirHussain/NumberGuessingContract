@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require("hardhat");
-const { decimalToBig, decimalToBigUints } = require('./utils/helper');
+const { decimalToBig, decimalToBigUnits } = require('./utils/helper');
 
 describe('stakingOffering contract test cases', function () {
     let stakingOffering;
@@ -33,7 +33,7 @@ describe('stakingOffering contract test cases', function () {
             '0x21c639bBC0ce1be64a442dc495867a4F1D2122d0', 
             sToken, 
             sToken,
-            decimalToBigUints(new Date().toString(),0) ,
+            decimalToBigUnits(new Date().toString(),0) ,
             decimalToBig('90') , 
             true,
             false,
