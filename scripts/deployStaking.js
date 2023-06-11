@@ -2,8 +2,8 @@
 const {ethers,network} = require("hardhat");
 
 async function main() {
-  if (network.name != "goerli")  {
-    console.warn("This needs to be on GOERLI");
+  if (network.name != "sepolia")  {
+    console.warn("This needs to be on SEPOLIA");
     process.exit(1)
 }
 const [owner] = await ethers.getSigners();
@@ -18,11 +18,11 @@ async function deployStuff() {
 
   stakingAddress = 0
   
-  let CUSTOM_ERC20 = await ethers.getContractFactory("FluteStaking")
+  let CUSTOM_ERC20 = await ethers.getContractFactory("VernoStaking")
 
   if (stakingAddress == 0) {
-      console.log("deploy staking on GOERLI")
-      FluteStaking = await CUSTOM_ERC20.deploy('0x933458F3F0154c3141b044eB77D20a409e614028', '0xFb156f075E7F00c80abEBFD4BaB3b9258F5D8B13')
+      console.log("deploy staking on SEPOLIA")
+      FluteStaking = await CUSTOM_ERC20.deploy('')
      
       console.log("staking contract : ",FluteStaking.address," tx ",FluteStaking.deployTransaction.hash)
       console.log("deployed staking : ",FluteStaking.deployTransaction.hash, FluteStaking.address)
@@ -30,7 +30,7 @@ async function deployStuff() {
       console.log(recipt.status == 1 ? "success": "failed")
       await run("verify:verify", {
           address: FluteStaking.address,
-          constructorArguments: ['0x933458F3F0154c3141b044eB77D20a409e614028', '0xFb156f075E7F00c80abEBFD4BaB3b9258F5D8B13']
+          constructorArguments: []
       });
 
   } else {

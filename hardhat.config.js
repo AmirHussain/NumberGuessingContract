@@ -21,14 +21,14 @@ module.exports = {
         }
       }
     },
-    goerli: {
-      url: `https://goerli.infura.io/v3/${process.env.MAINNET_INFURA_ID}`,
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.MAINNET_INFURA_ID}`,
       accounts: [process.env.TEST_KEY]
     }
   },
   etherscan: {
     apiKey: {
-      goerli: process.env.ETHERSCAN_API_KEY // ETH
+      sepolia: process.env.ETHERSCAN_API_KEY // ETH
     }
   },
 

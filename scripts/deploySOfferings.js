@@ -2,8 +2,8 @@
 const {ethers,network} = require("hardhat");
 
 async function main() {
-  if (network.name != "goerli")  {
-    console.warn("This needs to be on GOERLI");
+  if (network.name != "sepolia")  {
+    console.warn("This needs to be on SEPOLIA");
     process.exit(1)
 }
 const [owner] = await ethers.getSigners();
@@ -21,7 +21,7 @@ async function deployStuff() {
   let stakingOfferings = await ethers.getContractFactory("StakingOfferings")
 
   if (stakingOfferingsAddress == 0) {
-      console.log("deploy stakingOfferings on GOERLI")
+      console.log("deploy stakingOfferings on SEPOLIA")
       stakingOfferings = await stakingOfferings.deploy()
      
       console.log("stakingOfferings contract : ",stakingOfferings.address," tx ",stakingOfferings.deployTransaction.hash)

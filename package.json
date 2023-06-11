@@ -5,21 +5,18 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy-lending":"npx hardhat compile && npx hardhat run --network goerli scripts/deploy.js",
-    "deploy-fft":"npx hardhat compile && npx hardhat run --network goerli scripts/deployERC20.js",
-    "deploy-gov":"npx hardhat compile && npx hardhat run --network goerli scripts/deployGov.js",
-    "deploy-gov-vot":"npx hardhat compile && npx hardhat run --network goerli scripts/deployGovVoting.js",
-  
-    "deploy-staking":"npx hardhat compile && npx hardhat run --network goerli scripts/deployStaking.js",
-    "deploy-sOffering":"npx hardhat compile && npx hardhat run --network goerli scripts/deploySOfferings.js",
-    
-    "test-sOffering":"hardhat test test/stakingOfferings.js --network hardhat",
-    "test-lending":"hardhat test test/lendingPool.js --network hardhat",
-    "test-governance":"hardhat test test/governance.js --network hardhat",
-    "test-gov-vot":"hardhat test test/governanceVoting.js --network hardhat"
-
+    "deploy-lending": "npx hardhat compile && npx hardhat run --network sepolia scripts/deploy.js",
+    "deploy-fft": "npx hardhat compile && npx hardhat run --network sepolia scripts/deployERC20.js",
+    "deploy-gov": "npx hardhat compile && npx hardhat run --network sepolia scripts/deployGov.js",
+    "deploy-gov-vot": "npx hardhat compile && npx hardhat run --network sepolia scripts/deployGovVoting.js",
+    "deploy-staking": "git add . && git commit -m 'deployment' && git push --all && npx hardhat compile && npx hardhat run --network sepolia scripts/deployStaking.js",
+    "deploy-sOffering": "npx hardhat compile && npx hardhat run --network sepolia scripts/deploySOfferings.js",
+    "test-sOffering": "hardhat test test/stakingOfferings.js --network hardhat",
+    "test-lending": "hardhat test test/lendingPool.js --network hardhat",
+    "test-governance": "hardhat test test/governance.js --network hardhat",
+    "test-gov-vot": "hardhat test test/governanceVoting.js --network hardhat"
   },
-  "author": "Jahanzaib",
+  "author": "Amir",
   "license": "ISC",
   "devDependencies": {
     "@ethersproject/abi": "^5.7.0",
