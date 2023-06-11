@@ -18,7 +18,7 @@ async function deployStuff() {
 
   stakingAddress = 0
   
-  let CUSTOM_ERC20 = await ethers.getContractFactory("VernoStaking")
+  let CUSTOM_ERC20 = await ethers.getContractFactory("VarnofxStaking")
 
   if (stakingAddress == 0) {
       console.log("deploy staking on SEPOLIA")
