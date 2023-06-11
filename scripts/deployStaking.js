@@ -22,7 +22,7 @@ async function deployStuff() {
 
   if (stakingAddress == 0) {
       console.log("deploy staking on SEPOLIA")
-      FluteStaking = await CUSTOM_ERC20.deploy('')
+      FluteStaking = await CUSTOM_ERC20.deploy()
      
       console.log("staking contract : ",FluteStaking.address," tx ",FluteStaking.deployTransaction.hash)
       console.log("deployed staking : ",FluteStaking.deployTransaction.hash, FluteStaking.address)
