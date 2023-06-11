@@ -611,11 +611,11 @@ contract VarnofxStaking is Context, Ownable {
         return (dl.invite);
     }
 
-    function memberDeposit(address _addr, uint256 index) external view returns (uint40 time, uint256 amount, uint256 lifedays, uint256 percent) {
+    function memberDeposit(address _addr, uint256 index) external view returns (uint40 time, uint256 amount, uint256 lifedays, uint256 percent, bool isBorrowed, bool isBreakEven) {
         Member storage member = members[_addr];
         Depo storage dep = member.deposits[index];
         Tarif storage tarif = tarifs[dep.tarif];
-        return (dep.time, dep.amount, tarif.life_days, tarif.percent);
+        return (dep.time, dep.amount, tarif.life_days, tarif.percent,dep.isBorrowed,dep.isBreakEven);
     }
 
     function getBalance() public view returns (uint256) {
