@@ -23,13 +23,27 @@ module.exports = {
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.MAINNET_INFURA_ID}`,
-      accounts: [process.env.TEST_KEY]
+      accounts: [process.env.ACCOUNT_SECRET]
+    },
+    obscuro:{
+      url:'https://testnet.ten.xyz/v1/?token=55e3fa57526b9c2aeb70bac2d6ff38dc68b62292',
+      accounts:[process.env.ACCOUNT_SECRET]
     }
   },
   etherscan: {
     apiKey: {
-      sepolia: process.env.ETHERSCAN_API_KEY // ETH
-    }
+      obscuro: process.env.ETHERSCAN_API_KEY // ETH
+    },
+    customChains: [
+      {
+        network: "obscuro",
+        chainId: 443,
+        urls: {
+          apiURL: "https://testnet.tenscan.io/",
+          browserURL: "https://testnet.tenscan.io"
+        }
+      }
+    ]
   },
 
   solidity: '0.8.9'
